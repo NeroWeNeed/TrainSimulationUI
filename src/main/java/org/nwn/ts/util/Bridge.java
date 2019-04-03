@@ -5,9 +5,10 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+
 /*
-* Not Ready Yet
-* */
+ * Not Ready Yet
+ * */
 public class Bridge {
     private static final String LIBRARY_LOCATION = "/lib/TrainSimulator.dll";
 
@@ -28,7 +29,18 @@ public class Bridge {
         System.loadLibrary("TrainSimulatorx64");
     }
 
-    public native String startSimulation(String file);
+    //Large Function Signature
+    public native String startSimulation(String layoutFile,
+                                         String maintenanceFile,
+                                         String configurationFile,
+                                         String dailyRoutesFile,
+                                         String repeatableRoutesFile,
+                                         float weatherSeverity,
+                                         int weatherType,
+                                         boolean avoidCollisions,
+                                         int duration,
+                                         int transportCost
+    );
 
 
 }
