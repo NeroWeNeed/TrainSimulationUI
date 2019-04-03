@@ -9,9 +9,7 @@ public class TrainSimulation {
 
     public static void runSimulation(Configuration configuration) {
 //TODO Call Simulation
-        System.out.println("HEY");
-        System.out.println(Model.getInstance().baselineSetProperty());
+
         Model.getInstance().setBaselineSet(true);
-        System.out.println(Model.getInstance().baselineSetProperty());
     }
 }
