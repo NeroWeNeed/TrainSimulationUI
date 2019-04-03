@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import org.nwn.ts.util.FilePicker?>
+<?import javafx.geometry.Insets?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="org.nwn.ts.controller.ConfigController"
+      prefHeight="400.0" prefWidth="300.0" fx:id="container"
+>
+
+    <CheckBox fx:id="collisionAvoidance" text="Collision Avoidance">
+        <VBox.margin>
+            <Insets top="20" left="20" bottom="20" right="20"/>
+        </VBox.margin>
+    </CheckBox>
+
+    <TextField fx:id="duration" promptText="Duration">
+        <VBox.margin>
+            <Insets top="20" left="20" bottom="20" right="20"/>
+        </VBox.margin>
+    </TextField>
+    <TextField fx:id="transportationCost" promptText="Transportation Cost">
+        <VBox.margin>
+            <Insets top="20" left="20" bottom="20" right="20"/>
+        </VBox.margin>
+    </TextField>
+
+    <Slider fx:id="weatherSeverity">
+        <VBox.margin>
+            <Insets top="20" left="20" bottom="20" right="20"/>
+        </VBox.margin>
+    </Slider>
+    <HBox fx:id="weatherTypes" alignment="CENTER">
+        <VBox.margin>
+            <Insets top="20" left="20" bottom="20" right="20"/>
+        </VBox.margin>
+    </HBox>
+
+
+    <FilePicker promptText="Layout File" fx:id="layoutFilePicker">
+        <VBox.margin>
+            <Insets top="20" left="20" bottom="20" right="20"/>
+        </VBox.margin>
+    </FilePicker>
+
+    <FilePicker promptText="Maintenance File" fx:id="maintenanceFilePicker">
+        <VBox.margin>
+            <Insets top="20" left="20" bottom="20" right="20"/>
+        </VBox.margin>
+    </FilePicker>
+    <FilePicker promptText="Configuration File" fx:id="configurationFilePicker">
+        <VBox.margin>
+            <Insets top="20" left="20" bottom="20" right="20"/>
+        </VBox.margin>
+    </FilePicker>
+    <FilePicker promptText="Daily Routes File" fx:id="dailyRoutesFilePicker">
+        <VBox.margin>
+            <Insets top="20" left="20" bottom="20" right="20"/>
+        </VBox.margin>
+    </FilePicker>
+    <FilePicker promptText="Repeatable Routes File" fx:id="repeatableRoutesFilePicker">
+        <VBox.margin>
+            <Insets top="20" left="20" bottom="20" right="20"/>
+        </VBox.margin>
+    </FilePicker>
+    <Button text="Start Simulation" alignment="CENTER" VBox.vgrow="NEVER" onAction="#handleStartSimulationButton">
+        <VBox.margin>
+            <Insets top="20" left="20" bottom="20" right="20"/>
+        </VBox.margin>
+    </Button>
+
+
+</VBox>
