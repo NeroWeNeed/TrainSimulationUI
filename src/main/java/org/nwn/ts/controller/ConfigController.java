@@ -11,11 +11,14 @@ import javafx.scene.layout.Priority;
 import javafx.stage.Stage;
 import org.nwn.ts.Model;
 import org.nwn.ts.TrainSimulation;
+import org.nwn.ts.event.UpdateMetricEvent;
+import org.nwn.ts.stats.MetricHolder;
 import org.nwn.ts.util.Configuration;
 import org.nwn.ts.util.FilePicker;
 
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class ConfigController implements Initializable {
@@ -95,7 +98,9 @@ public class ConfigController implements Initializable {
         updateConfiguration();
         try {
             TrainSimulation.validateConfiguration(Model.getInstance().getConfiguration());
-            TrainSimulation.runSimulation(Model.getInstance().getConfiguration());
+            List<MetricHolder> metrics = TrainSimulation.runSimulation(Model.getInstance().getConfiguration());
+            UpdateMetricEvent metricEvent = new UpdateMetricEvent(metrics);
+            container.fireEvent(metricEvent);
             ((Stage) container.getScene().getWindow()).close();
 
         } catch (Exception exception) {

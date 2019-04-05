@@ -1,4 +1,4 @@
 package org.nwn.ts.stats;
 
-public interface RailwayMetricHolder {
+public interface RailwayMetricHolder extends MetricHolder {
 }

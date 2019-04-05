@@ -1,4 +1,4 @@
 package org.nwn.ts.stats;
 
-public interface SimulationMetricHolder {
+public interface SimulationMetricHolder extends MetricHolder {
 }
