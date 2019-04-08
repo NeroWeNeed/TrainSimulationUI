@@ -38,6 +38,11 @@
                         <Insets top="20" left="20" bottom="20" right="20"/>
                     </VBox.margin>
                 </FilePicker>
+                <FilePicker promptText="Output File Directory" fx:id="outputFilePicker" directoryPicker="true">
+                    <VBox.margin>
+                        <Insets top="20" left="20" bottom="20" right="20"/>
+                    </VBox.margin>
+                </FilePicker>
             </VBox>
             <Separator orientation="VERTICAL"/>
             <VBox HBox.hgrow="ALWAYS">

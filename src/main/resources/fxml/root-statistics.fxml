@@ -6,8 +6,6 @@
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="org.nwn.ts.controller.StatisticsController"
       prefHeight="400.0" prefWidth="600.0" fx:id="container">
-    <ComboBox fx:id="comboBox">
 
-    </ComboBox>
     <VBox fx:id="statContainer"/>
 </VBox>

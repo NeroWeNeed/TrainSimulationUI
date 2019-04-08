@@ -2,9 +2,7 @@ package org.nwn.ts.util;
 
 import javafx.beans.NamedArg;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
@@ -24,6 +22,7 @@ public class FilePicker extends HBox {
     private TextField textField = new TextField();
     private Button button = new Button("...");
     private ObjectProperty<File> valueProperty = new SimpleObjectProperty<>();
+    private BooleanProperty directoryPicker = new SimpleBooleanProperty(false);
 
     public FilePicker() {
         super();
@@ -36,8 +35,13 @@ public class FilePicker extends HBox {
         getChildren().add(textField);
         getChildren().add(button);
         button.setOnAction(event -> {
-            javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
-            valueProperty.set(fileChooser.showOpenDialog(getScene().getWindow()));
+            if (isDirectoryPicker()) {
+                javafx.stage.DirectoryChooser dirChooser = new javafx.stage.DirectoryChooser();
+                valueProperty.set(dirChooser.showDialog(getScene().getWindow()));
+            } else {
+                javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+                valueProperty.set(fileChooser.showOpenDialog(getScene().getWindow()));
+            }
         });
 
         textField.textProperty().bind(Bindings.when(valueProperty.isNull()).then("").otherwise(valueProperty.asString()));
@@ -75,5 +79,15 @@ public class FilePicker extends HBox {
         textField.setPromptText(value);
     }
 
+    public boolean isDirectoryPicker() {
+        return directoryPicker.get();
+    }
 
+    public BooleanProperty directoryPickerProperty() {
+        return directoryPicker;
+    }
+
+    public void setDirectoryPicker(boolean directoryPicker) {
+        this.directoryPicker.set(directoryPicker);
+    }
 }

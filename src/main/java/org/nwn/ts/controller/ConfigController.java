@@ -41,10 +41,12 @@ public class ConfigController implements Initializable {
     private FilePicker dailyRoutesFilePicker;
     @FXML
     private FilePicker repeatableRoutesFilePicker;
+    @FXML
+    private FilePicker outputFilePicker;
 
     /*
-    *    Options
-    */
+     *    Options
+     */
     @FXML
     private Slider weatherSeverity;
 

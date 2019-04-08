@@ -1,4 +1,5 @@
 package org.nwn.ts.stats;
 
-public interface HubMetricHolder extends MetricHolder{
+public interface HubMetricHolder extends MetricHolder {
+
 }
