@@ -16,11 +16,13 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
-
+jar {
+    manifest {
+        attributes 'Main-Class': 'org.nwn.ts.Launcher'
+    }
+}
 
 task generateHeaders(type: JavaCompile) {
-
-    
     include("**/Bridge.java")
     options.compilerArgs += "-h ./src/main/cpp"
     options.fork = true
