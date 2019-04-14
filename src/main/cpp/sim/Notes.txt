@@ -1,0 +1,16 @@
+Generate all nodes
+link all tracks
+
+meaning that the track linking method must set the connection pointers
+
+
+
+
+Todo:
+	Deep copy and return of pathfinding
+
+	train movement
+
+		collision avoidance
+
+	stats 
