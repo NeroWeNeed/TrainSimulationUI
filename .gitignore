@@ -70,3 +70,10 @@ fabric.properties
 /gradlew
 /gradlew.bat
 /lib/
+/src/main/cpp/Trainsim/Debug
+/src/main/cpp/Trainsim/Trainsim.vcxproj.user
+/src/main/cpp/Trainsim/Trainsim.vcxproj.filters
+/src/main/cpp/Trainsim/Trainsim.vcxproj
+/src/main/cpp/.vs/Trainsim/v15
+/.vs
+/.gitattributes
