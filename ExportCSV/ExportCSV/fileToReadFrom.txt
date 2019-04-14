@@ -1,0 +1,27 @@
+Day One
+Train Name
+TrainOne Passenger 1000 0 500
+TrainOne Freight 100 10 500
+Station Name
+StationThree 10 100 50 150
+StationFour 10 100 50 150 
+Track Name
+TrackOne 25
+TrackTwo 2
+Hub Name
+HubOne 5
+HubTwo 3
+Day
+Day Three
+Train Name
+TrainOne Passenger 10 0 500
+TrainOne Freight 100 10 50
+Station Name
+StationTwo 100 1000 50 150
+StationFive 100 1000 50 150 
+Track Name
+TrackOne 25
+TrackTwo 2
+Hub Name
+HubOne 5
+HubTwo 3
