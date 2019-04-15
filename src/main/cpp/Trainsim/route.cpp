@@ -34,6 +34,7 @@ vector<route::record> route::AstarPath(node* src, node* dst, vector<record> grap
 	for (int i = 0; i < graph.size(); i++)
 	{
 		if (graph[i].thisNode == src) graph[i].distance = 0;	//Initialize starting node's distance to 0
+		if (graph[i].thisNode == src) graph[i].weightBefore = 0;	//Initialize starting node's prevWeight to 0
 		unexplored.push_back(&(graph[i]));
 	}
 
@@ -78,6 +79,7 @@ vector<route::record> route::AstarPath(node* src, node* dst, vector<record> grap
 			if (currentDist < graph[connectionDestinationID].distance) //if we have found a new shortest path, record it
 			{
 				graph[connectionDestinationID].distance = currentDist; //record distance
+				graph[connectionDestinationID].weightBefore = currentConnection->getWeight(); //record distance
 				graph[connectionDestinationID].prev = current;   //record precursor
 			}
 
@@ -100,14 +102,14 @@ vector<route::record> route::AstarPath(node* src, node* dst, vector<record> grap
 		}
 
 		//Reverse our traceback (so that it is logically forward)
-		int back = traceback.size() - 1;
-		for (int front = 0; front < traceback.size(); front++, back--)
-		{
-			if (front >= back) break; //Stop swapping if the front & back meet or cross
-			record swap = traceback[back];
-			traceback[back] = traceback[front];
-			traceback[front] = swap;
-		}
+//		int back = traceback.size() - 1;
+//		for (int front = 0; front < traceback.size(); front++, back--)
+//		{
+//			if (front >= back) break; //Stop swapping if the front & back meet or cross
+//			record swap = traceback[back];
+//			traceback[back] = traceback[front];
+//			traceback[front] = swap;
+//		}
 	}
 	else
 	{
@@ -118,6 +120,7 @@ vector<route::record> route::AstarPath(node* src, node* dst, vector<record> grap
 	for (int i = 0; i < graph.size(); i++)
 	{
 		graph[i].distance = INT_MAX;
+		graph[i].weightBefore = INT_MAX;
 	}
 	return traceback;
 }

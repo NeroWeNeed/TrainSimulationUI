@@ -180,6 +180,23 @@ node* node::getConnection(int in)
 	}
 	else
 	{
-		return connections.at(in);
+		return connections[in];
 	}
+}
+
+int node::getNumTrainsHere() { return trainsHere.size(); }
+
+train* node::getTrain(int in)
+{
+	if (in > trainsHere.size())
+	{
+		//ERROR HANDLING
+		cout << "Node::getTrain tried to access out-of-bounds location" << endl;
+		return NULL;
+	}
+	else
+	{
+		return trainsHere.at(in);
+	}
+
 }

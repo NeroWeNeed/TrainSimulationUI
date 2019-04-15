@@ -37,5 +37,9 @@ public:
 	int getNumConnections();
 
 	node* getConnection(int in);
+
+	int getNumTrainsHere();
+
+	train* getTrain(int in);
 };
 

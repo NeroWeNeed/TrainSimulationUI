@@ -77,3 +77,6 @@ fabric.properties
 /src/main/cpp/.vs/Trainsim/v15
 /.vs
 /.gitattributes
+/src/main/cpp/Debug/Trainsim.exe.lastcodeanalysissucceeded
+/src/main/cpp/Debug/Trainsim.ilk
+/src/main/cpp/Debug/Trainsim.pdb

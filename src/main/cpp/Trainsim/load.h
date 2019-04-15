@@ -15,6 +15,10 @@ private:
 	node* spawnPoint;
 	node* destination;
 
+	milTime begin;
+	milTime pickup;
+	milTime dropoff;
+
 	struct loadStats
 	{
 
@@ -28,6 +32,13 @@ public:
 
 	string getName();
 	node* getSpawn();
+	node* getDest();
+
+	void setPickupTime(milTime when);
+	void setDropoffTime(milTime when);
+
+	loadType getType();
+	int getAmount();
 
 };
 

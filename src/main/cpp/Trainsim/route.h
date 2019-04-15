@@ -13,6 +13,8 @@ public:
 		node* thisNode;
 		record* prev;
 		int distance;
+		int weightBefore; //Because train doesn't know the track class, this is used to communicate edge weight to trains
+						  //Contains the weight of the edge leading up to this record's node.
 
 		bool operator<(const record& b);
 	};

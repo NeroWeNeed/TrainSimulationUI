@@ -13,6 +13,8 @@ using namespace std;
 int currentNodeID = 0; int currentTrackID = 0; int currentTrainID = 0;
 milTime realTime = { 00,00 };
 
+
+
 //Contains pointers to all tracks
 vector<track*> tracks;
 
@@ -48,6 +50,7 @@ struct simulationParameters
 	int tickMinutes;
 	milTime time;
 	int trainSpeed; //Weight units per hour
+	int passengerCap; //P train capacity
 };
 
 //Utility for looping isDigit
@@ -365,7 +368,7 @@ void buildTrains(string input, simulationParameters param)
 
 		if (!err.lowError)
 		{
-			trains.push_back(new train(name, currentTrainID, type, param.trainSpeed, hub));
+			trains.push_back(new train(name, currentTrainID, type, param.trainSpeed, hub, param.passengerCap));
 			int lastTrain = trains.size() - 1;
 
 			//Need to get the last train into a standalone pointer
@@ -414,16 +417,18 @@ void assignRoute(train* loco, node* dest)
 
 void IDLEtrainProc(train* theTrain, int* timeAllowance)
 {
-	if (theTrain->getState != IDLE)
+	if (theTrain->getState() != IDLE)
 	{
 		cout << "main::trainProcessing sent a train into IDLE proc that is not IDLE" << endl;
+		err.highError = true;
+		return;
 	}
 	//TODO: do statistics stuff here
 }
 
 void SEEKtrainProc(train* theTrain, int* timeAllowance)
 {
-	if (theTrain->getState != SEEK)
+	if (theTrain->getState() != SEEK)
 	{
 		cout << "main::trainProcessing sent a train into SEEK proc that is not SEEK" << endl;
 		err.highError = true;
@@ -435,17 +440,95 @@ void SEEKtrainProc(train* theTrain, int* timeAllowance)
 		err.highError = true;
 		return;
 	}
-
-	if (theTrain->getFuel() < 10.0f)
+	if (theTrain->getFuel() < 10.0f && (theTrain->getLocation()->getNodeType() == STATION || theTrain->getLocation()->getNodeType() == HUB) )
 	{
-		theTrain->setState(FUEL); //If train is low on fuel, set state to refuel
+		theTrain->setState(FUEL); //If train is low on fuel, set state to refuel, and also i dont know how to handle this on a track.
 		return;
 	}
 
-	//if (theTrain->getLoad())
+	if (theTrain->hasPath() == false) //If train needs a path, give it one
+	{
+		assignRoute(theTrain, theTrain->getLoadSought()->getSpawn());
+	}
+
+	//If we got here, we should be en route
+	theTrain->move(timeAllowance);
+
+	if (theTrain->getLoadSought()->getSpawn() == theTrain->getLocation()) //If we found the load
+	{
+		theTrain->setState(WAIT);
+		theTrain->setWait(60); //hour long processing time
+		theTrain->setExitState(SEEK);
+		theTrain->pickupLoad(realTime);
+
+		if (*timeAllowance > 0) theTrain->wait(timeAllowance); //If we have any time left over, put it into waiting
+		return;
+	}
+
 }
 
+void HAULtrainProc(train* theTrain, int* timeAllowance)
+{
+	if (theTrain->getState() != HAUL)
+	{
+		cout << "main::trainProcessing sent a train into HAUL proc that is not HAUL" << endl;
+		err.highError = true;
+		return;
+	}
+	if (theTrain->hasLoad() == false)
+	{
+		cout << "main::HAULtrainProc encountered train " << theTrain->getName() << " at " << theTrain->getLocation()->getName() << " that has no load." << endl;
+		err.highError = true;
+		return;
+	}
+	if (theTrain->getFuel() < 10.0f && (theTrain->getLocation()->getNodeType() == STATION || theTrain->getLocation()->getNodeType() == HUB))
+	{
+		theTrain->setState(FUEL); //If train is low on fuel, set state to refuel, and also i dont know how to handle this on a track.
+		return;
+	}
 
+	if (theTrain->hasPath() == false) //If train needs a path, give it one
+	{
+		assignRoute(theTrain, theTrain->getLoadCarried()->getDest());
+	}
+
+	//If we got here, we should be en route
+	theTrain->move(timeAllowance);
+
+	if (theTrain->getLoadCarried()->getDest() == theTrain->getLocation()) //If we found the destination
+	{
+		theTrain->setState(WAIT);
+		theTrain->setWait(60); //hour long processing time
+		theTrain->setExitState(HOME);
+		theTrain->dropoffLoad(realTime);
+
+		if (*timeAllowance > 0) theTrain->wait(timeAllowance); //If we have any time left over, put it into waiting
+		return;
+	}
+}
+
+void WAITtrainProc(train* theTrain, int* timeAllowance)
+{
+	if (theTrain->getState() != WAIT)
+	{
+		cout << "main::trainProcessing sent a train into WAIT proc that is not WAIT" << endl;
+		err.highError = true;
+		return;
+	}
+
+	theTrain->wait(timeAllowance); //State should exit within this method.
+}
+
+void FUELtrainProc(train* theTrain, int* timeAllowance)
+{
+	if (theTrain->getState() != FUEL)
+	{
+		cout << "main::trainProcessing sent a train into FUEL proc that is not FUEL" << endl;
+		err.highError = true;
+		return;
+	}
+
+}
 
 //Called once per tick to handle trains
 void trainProcessing(train* theTrain)
@@ -466,11 +549,11 @@ int main()
 {
 	simulationParameters parameters;
 	parameters.hubFuel = 1.1;
-	parameters.trainSpeed = 10;
+	parameters.trainSpeed = 175;
 
-	string Snodes = "HUB1\nSTATION1 F 0 0 0 0 0 0\nSTATION2 F 0 0 0 0 0 0\nSTATION3 P 0 0 0 0 0 0\nSTATION4 F 0 0 0 0 0 0\nSTATION5 P 0 0 0 0 0 0\nSTATION6 F 0 0 0 0 0 0\nSTATION7 F 0 0 0 0 0 0\nSTATION8 F 0 0 0 0 0 0\nSTATION9 P 0 0 0 0 0 0\nSTATION10 P 0 0 0 0 0 0\nSTATION11 P 0 0 0 0 0 0\nSTATION12 F 0 0 0 0 0 0\n";
-	string Stracks = "STATION1 STATION2 7 0000 0000\nSTATION2 STATION3 15 0000 0000\nSTATION3 STATION4 21 0000 0000\nSTATION4 STATION5 12 0000 0000\nSTATION5 STATION6 13 0000 0000\nSTATION5 STATION7 6 0000 0000\nSTATION7 STATION8 7 0000 0000\nSTATION8 STATION5 2 0000 0000\nSTATION8 HUB1 12 0000 0000\nSTATION8 STATION10 15 0000 0000\nSTATION10 STATION9 8 0000 0000\nSTATION10 STATION11 7 0000 0000\nSTATION11 STATION12 18 0000 0000\nSTATION1 STATION11 9 0000 0000\n";
-	string Strains = "LOCOMOTIVE1 HUB1 P\nLOCOMOTIVE2 HUB1 F\nLOCOMOTIVE3 HUB1 F\n";
+	string Snodes = "HUB1\nSTATION1 F 0 0 0 0 0 0\nSTATION2 F 0 0 0 0 0 0\nSTATION3 P 0 0 0 0 0 0\nSTATION4 F 0 0 0 0 0 0\nSTATION5 P 0 0 0 0 0 0\nSTATION6 F 0 0 0 0 0 0\nSTATION7 F 0 0 0 0 0 0\nSTATION8 F 0 0 0 0 0 0\nSTATION9 P 0 0 0 0 0 0\nSTATION10 P 0 0 0 0 0 0\nSTATION11 P 0 0 0 0 0 0\nSTATION12 F 0 0 0 0 0 0\nHUB2\n";
+	string Stracks = "STATION1 STATION2 7 0000 0000\nSTATION2 STATION3 15 0000 0000\nSTATION3 STATION4 21 0000 0000\nSTATION4 STATION5 12 0000 0000\nSTATION5 STATION6 13 0000 0000\nSTATION5 STATION7 6 0000 0000\nSTATION7 STATION8 7 0000 0000\nSTATION8 STATION5 2 0000 0000\nSTATION8 HUB1 12 0000 0000\nSTATION8 STATION10 15 0000 0000\nSTATION10 STATION9 8 0000 0000\nSTATION10 STATION11 7 0000 0000\nSTATION11 STATION12 18 0000 0000\nSTATION1 STATION11 9 0000 0000\nHUB2 STATION1 12 0000 0000";
+	string Strains = "LOCOMOTIVE1 HUB1 P\nLOCOMOTIVE2 HUB2 F\nLOCOMOTIVE3 HUB1 F\n";
 
 	cout << rule << "Creating Hub and Station nodes..." << endl;
 	buildNodes(Snodes, parameters);
@@ -521,22 +604,53 @@ int main()
 	}
 	cout << rule << endl;
 
-	vector<route::record> gimme;
-	
-	assignRoute(trains[0], nodes[1]);
-	assignRoute(trains[1], nodes[7]);
-	assignRoute(trains[2], nodes[3]);
 
+
+	assignRoute(trains[0], nodes[1]);
 	trains[0]->printRoute();
+	cout << endl;
+	trains[0]->setState(SEEK);
+
+
+	assignRoute(trains[1], nodes[8]);
 	trains[1]->printRoute();
-	trains[2]->printRoute();
+	cout << endl;
+	trains[1]->setState(SEEK);
+
+
+	while (trains[0]->hasPath())
+	{
+		int freeMinute = 1;
+		cout << rule << "FREIGHT TRAIN" << endl;
+		trains[0]->move(&freeMinute);
+		trains[0]->printInfo();
+		cout << endl;
+
+		cout << rule << "PASS TRAIN" << endl;
+		freeMinute = 1;
+		trains[1]->move(&freeMinute);
+		trains[1]->printInfo();
+		cout << endl;
+
+	}
+
+
+	while (1)
+	{
+		break;
+		assignRoute(trains[0], nodes[1]);
+		trains[0]->printRoute();
+		trains[0]->deleteRoute();
+	}
 
 
 	char continueSim = '0';
 	while (continueSim == '0')
 	{
-
+		break;
 	}
 
+
+	cout << endl << endl;
 	system("pause");
 }
