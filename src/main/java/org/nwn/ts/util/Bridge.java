@@ -1,6 +1,7 @@
 package org.nwn.ts.util;
 
 import org.nwn.ts.stats.MetricHolder;
+import org.nwn.ts.stats.SimulationDay;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.File;
@@ -57,10 +58,7 @@ public class Bridge {
                                          int transportCost
     );
 
-    public List<MetricHolder> parseResults(File resultsFile) {
-        //TODO: Parse Output File
-        return Collections.emptyList();
-    }
+
 
 
 }

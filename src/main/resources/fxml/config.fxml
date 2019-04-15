@@ -17,17 +17,17 @@
                         <Insets top="20" left="20" bottom="20" right="20"/>
                     </VBox.margin>
                 </FilePicker>
-
-                <FilePicker promptText="Maintenance File" fx:id="maintenanceFilePicker">
-                    <VBox.margin>
-                        <Insets top="20" left="20" bottom="20" right="20"/>
-                    </VBox.margin>
-                </FilePicker>
                 <FilePicker promptText="Configuration File" fx:id="configurationFilePicker">
                     <VBox.margin>
                         <Insets top="20" left="20" bottom="20" right="20"/>
                     </VBox.margin>
                 </FilePicker>
+                <FilePicker promptText="Maintenance File" fx:id="maintenanceFilePicker">
+                    <VBox.margin>
+                        <Insets top="20" left="20" bottom="20" right="20"/>
+                    </VBox.margin>
+                </FilePicker>
+
                 <FilePicker promptText="Daily Routes File" fx:id="dailyRoutesFilePicker">
                     <VBox.margin>
                         <Insets top="20" left="20" bottom="20" right="20"/>
@@ -78,22 +78,21 @@
 
     </center>
 
-<bottom>
-    <VBox>
-        <Separator/>
-        <FlowPane alignment="CENTER_RIGHT">
+    <bottom>
+        <VBox>
+            <Separator/>
+            <FlowPane alignment="CENTER_RIGHT" hgap="10">
+                <Button text="Cancel" VBox.vgrow="NEVER" onAction="#handleCancelSimulationButton"/>
+                <Button text="Start Simulation" VBox.vgrow="NEVER" onAction="#handleStartSimulationButton" fx:id="startSimulationButton"/>
 
-            <Button text="Start Simulation" VBox.vgrow="NEVER" onAction="#handleStartSimulationButton"/>
 
+                <VBox.margin>
+                    <Insets top="20" left="20" bottom="20" right="20"/>
+                </VBox.margin>
+            </FlowPane>
+        </VBox>
 
-            <VBox.margin>
-                <Insets top="20" left="20" bottom="20" right="20"/>
-            </VBox.margin>
-        </FlowPane>
-    </VBox>
-
-</bottom>
-
+    </bottom>
 
 
 </BorderPane>

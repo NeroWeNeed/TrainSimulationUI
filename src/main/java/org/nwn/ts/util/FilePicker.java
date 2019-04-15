@@ -37,9 +37,11 @@ public class FilePicker extends HBox {
         button.setOnAction(event -> {
             if (isDirectoryPicker()) {
                 javafx.stage.DirectoryChooser dirChooser = new javafx.stage.DirectoryChooser();
+                dirChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
                 valueProperty.set(dirChooser.showDialog(getScene().getWindow()));
             } else {
                 javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+                fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
                 valueProperty.set(fileChooser.showOpenDialog(getScene().getWindow()));
             }
         });

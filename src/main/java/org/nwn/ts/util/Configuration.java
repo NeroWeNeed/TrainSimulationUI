@@ -1,6 +1,10 @@
 package org.nwn.ts.util;
 
+import org.nwn.ts.stats.TrainType;
+
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Configuration {
     public enum WeatherType {
@@ -13,6 +17,10 @@ public class Configuration {
     private boolean collisionAvoidance = false;
     private int duration = 0;
     private int transportCost = 0;
+    private int totalCrews = 0;
+    private int hubFuelCapacity = 0;
+    private int runDuration = 14;
+    private Map<TrainType, TrainConfiguration> trainConfigurations = new HashMap<>();
 
     private File layoutFile;
     private File maintenanceFile;
@@ -98,6 +106,34 @@ public class Configuration {
 
     public void setRepeatableRoutesFile(File repeatableRoutesFile) {
         this.repeatableRoutesFile = repeatableRoutesFile;
+    }
+
+    public Map<TrainType, TrainConfiguration> getTrainConfigurations() {
+        return trainConfigurations;
+    }
+
+    public int getTotalCrews() {
+        return totalCrews;
+    }
+
+    public void setTotalCrews(int totalCrews) {
+        this.totalCrews = totalCrews;
+    }
+
+    public int getHubFuelCapacity() {
+        return hubFuelCapacity;
+    }
+
+    public void setHubFuelCapacity(int hubFuelCapacity) {
+        this.hubFuelCapacity = hubFuelCapacity;
+    }
+
+    public int getRunDuration() {
+        return runDuration;
+    }
+
+    public void setRunDuration(int runDuration) {
+        this.runDuration = runDuration;
     }
 
     @Override

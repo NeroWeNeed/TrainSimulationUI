@@ -1,10 +1,14 @@
 package org.nwn.ts;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import org.nwn.ts.stats.MetricHolder;
+import org.nwn.ts.stats.SimulationDay;
 import org.nwn.ts.util.Configuration;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Model {
     private static Model INSTANCE = new Model();
@@ -19,7 +23,15 @@ public class Model {
 
     private BooleanProperty baselineSet = new SimpleBooleanProperty(false);
     private ObjectProperty<Configuration> configuration = new SimpleObjectProperty<>(new Configuration());
+    private ListProperty<SimulationDay> simulationDays = new SimpleListProperty<>(FXCollections.observableArrayList());
 
+    public ObservableList<SimulationDay> getSimulationDays() {
+        return simulationDays.get();
+    }
+
+    public ListProperty<SimulationDay> simulationDaysProperty() {
+        return simulationDays;
+    }
 
     public boolean getBaselineSet() {
         return baselineSet.get();

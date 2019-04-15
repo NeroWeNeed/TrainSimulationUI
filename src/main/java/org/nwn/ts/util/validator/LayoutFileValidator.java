@@ -17,11 +17,16 @@ import java.util.regex.Pattern;
  * TODO: Better Error Messages
  * */
 public class LayoutFileValidator implements Validator {
+    private static LayoutFileValidator INSTANCE = new LayoutFileValidator();
+
+    public static LayoutFileValidator getInstance() {
+        return INSTANCE;
+    }
     //Regex
 
     private static final Pattern controlPattern = Pattern.compile("C\\s*(STATION|LOCOMOTIVE|HUB|EDGE)\\s*([0-9]{4})\\s*");
     private static final Pattern stationPattern = Pattern.compile("(.*?)\\s+(.)\\s+([0-9]+)\\s+([0-9]+)\\s+([0-9]+)\\s+([0-9]+)\\s+([0-9]+)\\s+([0-9]+\\.[0-9]+)\\s*");
-    private static final Pattern edgePattern = Pattern.compile("(.*?)\\s+(.*?)\\s+([-]?[0-9]+)\\s+([0-9]{2}\\:[0-9]{2})\\s+([0-9]{2}\\:[0-9]{2})\\s*");
+    private static final Pattern edgePattern = Pattern.compile("(.*?)\\s+(.*?)\\s+([-]?[0-9]+)\\s+([0-9]{2}:[0-9]{2})\\s+([0-9]{2}\\:[0-9]{2})\\s*");
     private static final Pattern trainPattern = Pattern.compile("(.*?)\\s+(.*?)\\s+(.)\\s*");
     private static final Pattern trailerPattern = Pattern.compile("T\\s+([0-9]+)\\s+([0-9]+)\\s*");
 

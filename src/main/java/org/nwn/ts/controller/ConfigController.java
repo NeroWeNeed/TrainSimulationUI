@@ -1,5 +1,6 @@
 package org.nwn.ts.controller;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -13,11 +14,14 @@ import org.nwn.ts.Model;
 import org.nwn.ts.TrainSimulation;
 import org.nwn.ts.event.UpdateMetricEvent;
 import org.nwn.ts.stats.MetricHolder;
+import org.nwn.ts.stats.SimulationDay;
 import org.nwn.ts.util.Configuration;
 import org.nwn.ts.util.FilePicker;
 
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -59,6 +63,9 @@ public class ConfigController implements Initializable {
     @FXML
     private TextField transportationCost;
 
+    @FXML
+    private Button startSimulationButton;
+
 
     @FXML
     private HBox weatherTypes;
@@ -92,17 +99,20 @@ public class ConfigController implements Initializable {
         weatherSeverity.disableProperty().bind(baselineSetInverse);
         collisionAvoidance.disableProperty().bind(baselineSetInverse);
         weatherTypes.disableProperty().bind(baselineSetInverse);
+        startSimulationButton.disableProperty().bind(Bindings.createBooleanBinding(() -> layoutFilePicker.getValue() != null &&
+                        configurationFilePicker.getValue() != null,
+                layoutFilePicker.getValueProperty(), configurationFilePicker.getValueProperty()).not());
 
     }
 
     @FXML
-    public void handleStartSimulationButton(ActionEvent event) {
+    public void handleStartSimulationButton(ActionEvent event) throws Exception {
         updateConfiguration();
         try {
             TrainSimulation.validateConfiguration(Model.getInstance().getConfiguration());
-            List<MetricHolder> metrics = TrainSimulation.runSimulation(Model.getInstance().getConfiguration());
-            UpdateMetricEvent metricEvent = new UpdateMetricEvent(metrics);
-            container.fireEvent(metricEvent);
+            List<SimulationDay> metrics = TrainSimulation.runSimulation(Model.getInstance().getConfiguration());
+
+            Model.getInstance().getSimulationDays().addAll(metrics);
             ((Stage) container.getScene().getWindow()).close();
 
         } catch (Exception exception) {
@@ -110,9 +120,21 @@ public class ConfigController implements Initializable {
             alert.setTitle("Error");
             //TODO: Expand on Error Dialog
             alert.setHeaderText(null);
+
             alert.setContentText(exception.getLocalizedMessage());
+            /*StringBuilder sb = new StringBuilder();
+            for (StackTraceElement ste : exception.getStackTrace()) {
+                sb.append(ste.toString()).append("\n");
+            }*/
+
+            //alert.setContentText(String.format("%s\n%s", exception.toString(), sb.toString()));
             alert.showAndWait();
         }
+    }
+
+    @FXML
+    public void handleCancelSimulationButton(ActionEvent event) {
+        ((Stage) container.getScene().getWindow()).close();
     }
 
     protected void updateConfiguration() {

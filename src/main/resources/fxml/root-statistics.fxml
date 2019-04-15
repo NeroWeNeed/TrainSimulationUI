@@ -2,10 +2,19 @@
 
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.layout.VBox?>
-<VBox xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="org.nwn.ts.controller.StatisticsController"
-      prefHeight="400.0" prefWidth="600.0" fx:id="container">
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TableView?>
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.nwn.ts.controller.StatisticsController"
+            prefHeight="400.0" prefWidth="600.0" fx:id="container">
+    <left>
+        <ListView fx:id="simulationDaysListView"/>
 
+
+    </left>
     <VBox fx:id="statContainer"/>
-</VBox>
+</BorderPane>
