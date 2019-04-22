@@ -1,0 +1,7 @@
+H0002    03/26/2019
+LOCOMOTIVE    P     5000    7     60      1200
+LOCOMOTIVE    F     7000    6     40      3000
+CREWS     5
+FUEL    27000
+RUN    14
+T 00005

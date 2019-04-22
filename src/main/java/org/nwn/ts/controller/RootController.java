@@ -4,20 +4,15 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Shape;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.nwn.ts.Launcher;
 import org.nwn.ts.Model;
-import org.nwn.ts.event.UpdateMetricEvent;
 import org.nwn.ts.util.Configuration;
-
 
 import java.io.IOException;
 import java.net.URL;
@@ -31,7 +26,7 @@ public class RootController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        container.addEventHandler(UpdateMetricEvent.UPDATE_METRICS_ALL, this::onUpdateMetrics);
+
     }
 
 
@@ -48,6 +43,7 @@ public class RootController implements Initializable {
         newStage.initModality(Modality.WINDOW_MODAL);
         newStage.initOwner(container.getScene().getWindow());
         newStage.setScene(newScene);
+        newStage.setResizable(false);
         newStage.showAndWait();
         System.out.println("HANDLED");
 
@@ -72,7 +68,5 @@ public class RootController implements Initializable {
         //TODO: Export CSV
     }
 
-    private void onUpdateMetrics(UpdateMetricEvent event) {
-        System.out.println("UPDATED");
-    }
+
 }

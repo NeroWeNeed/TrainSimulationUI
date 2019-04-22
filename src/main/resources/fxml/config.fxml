@@ -12,7 +12,7 @@
     <center>
         <HBox>
             <VBox HBox.hgrow="ALWAYS">
-                <FilePicker promptText="Layout File" fx:id="layoutFilePicker">
+                <FilePicker promptText="Layout File" fx:id="structureFilePicker">
                     <VBox.margin>
                         <Insets top="20" left="20" bottom="20" right="20"/>
                     </VBox.margin>
@@ -46,11 +46,6 @@
             </VBox>
             <Separator orientation="VERTICAL"/>
             <VBox HBox.hgrow="ALWAYS">
-                <CheckBox fx:id="collisionAvoidance" text="Collision Avoidance">
-                    <VBox.margin>
-                        <Insets top="20" left="20" bottom="20" right="20"/>
-                    </VBox.margin>
-                </CheckBox>
 
                 <TextField fx:id="duration" promptText="Duration">
                     <VBox.margin>
@@ -62,13 +57,18 @@
                         <Insets top="20" left="20" bottom="20" right="20"/>
                     </VBox.margin>
                 </TextField>
+                <HBox>
+                    <fx:include fx:id="freightTrainConfig" source="config-train.fxml"/>
+                    <fx:include fx:id="passengerTrainConfig" source="config-train.fxml"/>
+
+                </HBox>
 
                 <Slider fx:id="weatherSeverity">
                     <VBox.margin>
                         <Insets top="20" left="20" bottom="20" right="20"/>
                     </VBox.margin>
                 </Slider>
-                <HBox fx:id="weatherTypes" alignment="CENTER">
+                <HBox fx:id="weatherTypes" alignment="CENTER" spacing="10">
                     <VBox.margin>
                         <Insets top="20" left="20" bottom="20" right="20"/>
                     </VBox.margin>
@@ -83,7 +83,8 @@
             <Separator/>
             <FlowPane alignment="CENTER_RIGHT" hgap="10">
                 <Button text="Cancel" VBox.vgrow="NEVER" onAction="#handleCancelSimulationButton"/>
-                <Button text="Start Simulation" VBox.vgrow="NEVER" onAction="#handleStartSimulationButton" fx:id="startSimulationButton"/>
+                <Button text="Start Simulation" VBox.vgrow="NEVER" onAction="#handleStartSimulationButton"
+                        fx:id="startSimulationButton"/>
 
 
                 <VBox.margin>

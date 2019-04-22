@@ -1,6 +1,6 @@
 package org.nwn.ts.exceptions;
 
-public class ConfigurationFileValidationException extends ValidationException {
+public class ConfigurationFileValidationException extends FileValidationException {
     public ConfigurationFileValidationException() {
     }
 

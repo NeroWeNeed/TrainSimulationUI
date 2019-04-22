@@ -1,20 +1,17 @@
 package org.nwn.ts.util.validator;
 
-import org.nwn.ts.Model;
-import org.nwn.ts.controller.ConfigController;
+import org.nwn.ts.exceptions.ConfigurationFileValidationException;
+import org.nwn.ts.exceptions.FileValidationException;
 import org.nwn.ts.stats.TrainType;
-import org.nwn.ts.util.Configuration;
-import org.nwn.ts.util.TrainConfiguration;
 import org.nwn.ts.util.validator.data.HeaderData;
-import org.nwn.ts.util.validator.exception.InvalidLineException;
-import org.nwn.ts.util.validator.exception.LineCountMismatchException;
+import org.nwn.ts.util.validator.data.TrainConfigurationData;
+import org.nwn.ts.util.validator.data.TrainSimulationUpdater;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,15 +31,15 @@ public class ConfigurationFileValidator implements Validator {
 
 
     @Override
-    public void validate(File file) throws Exception {
-        Configuration configuration = Model.getInstance().getConfiguration();
-        int newRunDuration = configuration.getRunDuration();
-        Map<TrainType, TrainConfiguration> newTrainConfigurations = new HashMap<>();
-        int newTotalCrews = configuration.getTotalCrews();
-        int newHubFuelCapacity = configuration.getHubFuelCapacity();
+    public void validate(File file, TrainSimulationUpdater updater) throws FileValidationException, IOException {
+
+        Integer newRunDuration = null;
+        Map<TrainType, TrainConfigurationData> newTrainConfigurations = new HashMap<>();
+        Integer newTotalCrews = null;
+        Integer newHubFuelCapacity = null;
 
         HeaderData header;
-        List<String> issues = new ArrayList<>();
+
         BufferedReader br = new BufferedReader(new FileReader(file));
         String line;
 
@@ -56,7 +53,7 @@ public class ConfigurationFileValidator implements Validator {
                 if (matcher.matches()) {
                     TrainType t = TrainType.parse(matcher.group(1));
 
-                    TrainConfiguration tc = new TrainConfiguration();
+                    TrainConfigurationData tc = new TrainConfigurationData();
 
                     tc.setFuelCapacity(Integer.valueOf(matcher.group(2)));
                     tc.setFuelCost(Integer.valueOf(matcher.group(3)));
@@ -66,7 +63,7 @@ public class ConfigurationFileValidator implements Validator {
 
 
                 } else {
-                    issues.add("Invalid Format for line: " + line + ", skipping");
+                    updater.getIssues().add("Invalid Format for line: " + line + ", skipping");
                 }
 
             } else if (line.startsWith("CREWS")) {
@@ -74,7 +71,7 @@ public class ConfigurationFileValidator implements Validator {
                 if (matcher.matches()) {
                     newTotalCrews = Integer.valueOf(matcher.group(1));
                 } else {
-                    issues.add("Invalid Format for line: " + line + ", skipping");
+                    updater.getIssues().add("Invalid Format for line: " + line + ", skipping");
                 }
 
             } else if (line.startsWith("FUEL")) {
@@ -82,7 +79,7 @@ public class ConfigurationFileValidator implements Validator {
                 if (matcher.matches()) {
                     newHubFuelCapacity = Integer.valueOf(matcher.group(1));
                 } else {
-                    issues.add("Invalid Format for line: " + line + ", skipping");
+                    updater.getIssues().add("Invalid Format for line: " + line + ", skipping");
                 }
 
             } else if (line.startsWith("RUN")) {
@@ -91,30 +88,53 @@ public class ConfigurationFileValidator implements Validator {
                     newRunDuration = Integer.valueOf(matcher.group(1));
 
                 } else {
-                    issues.add("Invalid Format for line: " + line + ", skipping");
+                    updater.getIssues().add("Invalid Format for line: " + line + ", skipping");
                 }
             } else if (line.startsWith("T")) {
                 matcher = trailerRegex.matcher(line);
                 if (matcher.matches()) {
                     int expectedLineCount = Integer.valueOf(matcher.group(1));
                     if (expectedLineCount != lineCount) {
-                        throw new LineCountMismatchException(String.format("Expected %d lines, found %d", expectedLineCount, lineCount));
+                        throw new ConfigurationFileValidationException(String.format("Control Count Mismatch. Expected: %d, Found: %d", expectedLineCount, lineCount));
+
                     }
                     break;
                 } else {
-                    issues.add("Invalid Format for line: " + line + ", skipping");
+                    updater.getIssues().add("Invalid Format for line: " + line + ", skipping");
                 }
             } else {
-                throw new InvalidLineException("Unknown line found: " + line);
+                throw new ConfigurationFileValidationException("Unable to parse line: " + line);
             }
 
             lineCount += 1;
         }
-        //Apply
-        configuration.setRunDuration(newRunDuration);
-        configuration.setHubFuelCapacity(newHubFuelCapacity);
-        configuration.setTotalCrews(newTotalCrews);
-        configuration.getTrainConfigurations().putAll(newTrainConfigurations);
+
+        if (newRunDuration != null) {
+            int finalNewRunDuration = newRunDuration;
+            updater.getUpdates().add(simulation -> {
+                simulation.setDaysToRun(finalNewRunDuration);
+            });
+        }
+        if (newTotalCrews != null) {
+            int finalNewTotalCrews = newTotalCrews;
+            updater.getUpdates().add(simulation -> {
+                simulation.setCrewsPerHub(finalNewTotalCrews);
+            });
+
+        }
+        if (newHubFuelCapacity != null) {
+            int finalNewHubFuelCapacity = newHubFuelCapacity;
+            updater.getUpdates().add(simulation -> {
+                simulation.setFuelPerHub(finalNewHubFuelCapacity);
+            });
+
+        }
+        newTrainConfigurations.forEach((key, value) -> {
+            updater.getUpdates().add(simulation -> {
+                simulation.getTrainConfigurations().put(key, value);
+            });
+        });
+
 
     }
 }

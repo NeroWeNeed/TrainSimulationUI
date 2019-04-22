@@ -70,3 +70,4 @@ fabric.properties
 /gradlew
 /gradlew.bat
 /lib/
+/testFiles/

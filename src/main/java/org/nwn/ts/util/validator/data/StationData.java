@@ -4,12 +4,12 @@ import org.nwn.ts.stats.TrainType;
 
 public class StationData {
 
-    final String name;
-    final TrainType type;
-    final int maxTrains;
-    final int randomOnRange;
-    final int randomOffRange;
-    final double ticketPrice;
+    private final String name;
+    private final TrainType type;
+    private final int maxTrains;
+    private final int randomOnRange;
+    private final int randomOffRange;
+    private final double ticketPrice;
 
     public StationData(String name, TrainType type, int maxTrains, int randomOnRange, int randomOffRange, double ticketPrice) {
         this.name = name;

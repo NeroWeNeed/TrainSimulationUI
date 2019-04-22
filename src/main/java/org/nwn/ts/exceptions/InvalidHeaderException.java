@@ -1,4 +1,4 @@
-package org.nwn.ts.util.validator.exception;
+package org.nwn.ts.exceptions;
 
 public class InvalidHeaderException extends FileValidationException {
     public InvalidHeaderException() {

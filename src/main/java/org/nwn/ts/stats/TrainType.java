@@ -11,4 +11,13 @@ public enum TrainType {
         else
             return null;
     }
+
+    public static TrainType parseFull(String value) {
+        if (value.equalsIgnoreCase("FREIGHT"))
+            return FREIGHT;
+        else if (value.equalsIgnoreCase("PASSENGER"))
+            return PASSENGER;
+        else
+            return null;
+    }
 }

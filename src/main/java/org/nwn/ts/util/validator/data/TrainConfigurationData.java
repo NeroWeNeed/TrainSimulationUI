@@ -1,21 +1,21 @@
-package org.nwn.ts.util;
+package org.nwn.ts.util.validator.data;
 
 import org.nwn.ts.stats.TrainType;
 
-public class TrainConfiguration {
+public class TrainConfigurationData {
     private int fuelCapacity;
     private int fuelCost;
     private int speed;
     private int capacity;
 
-    public TrainConfiguration(int fuelCapacity, int fuelCost, int speed, int capacity) {
+    public TrainConfigurationData(int fuelCapacity, int fuelCost, int speed, int capacity) {
         this.fuelCapacity = fuelCapacity;
         this.fuelCost = fuelCost;
         this.speed = speed;
         this.capacity = capacity;
     }
 
-    public TrainConfiguration() {
+    public TrainConfigurationData() {
     }
 
     public int getFuelCapacity() {

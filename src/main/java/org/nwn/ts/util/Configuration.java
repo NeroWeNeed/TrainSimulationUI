@@ -1,6 +1,7 @@
 package org.nwn.ts.util;
 
 import org.nwn.ts.stats.TrainType;
+import org.nwn.ts.util.validator.data.TrainConfigurationData;
 
 import java.io.File;
 import java.util.HashMap;
@@ -8,19 +9,19 @@ import java.util.Map;
 
 public class Configuration {
     public enum WeatherType {
-        SUN, RAIN, SNOW;
+       FAIR,WINDY,RAINY,SNOWY;
     }
 
 
     private Float weatherSeverity = 0.0f;
-    private WeatherType weatherType = WeatherType.SUN;
+    private WeatherType weatherType = WeatherType.FAIR;
     private boolean collisionAvoidance = false;
     private int duration = 0;
     private int transportCost = 0;
     private int totalCrews = 0;
     private int hubFuelCapacity = 0;
     private int runDuration = 14;
-    private Map<TrainType, TrainConfiguration> trainConfigurations = new HashMap<>();
+    private Map<TrainType, TrainConfigurationData> trainConfigurations = new HashMap<>();
 
     private File layoutFile;
     private File maintenanceFile;
@@ -108,7 +109,7 @@ public class Configuration {
         this.repeatableRoutesFile = repeatableRoutesFile;
     }
 
-    public Map<TrainType, TrainConfiguration> getTrainConfigurations() {
+    public Map<TrainType, TrainConfigurationData> getTrainConfigurations() {
         return trainConfigurations;
     }
 

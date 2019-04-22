@@ -1,13 +1,16 @@
 package org.nwn.ts.util.validator;
 
+import org.nwn.ts.exceptions.FileValidationException;
+import org.nwn.ts.exceptions.MaintenanceFileValidationException;
 import org.nwn.ts.util.validator.data.*;
-import org.nwn.ts.util.validator.exception.FileValidationException;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,10 +22,12 @@ public class MaintenanceFileValidator implements Validator {
     private static final Pattern trailerPattern = Pattern.compile("T\\s+([0-9]+)\\s+([0-9]+)\\s+([0-9]+)\\s*");
 
     @Override
-    public void validate(File file) throws Exception {
+    public void validate(File file, TrainSimulationUpdater updater) throws FileValidationException, IOException {
         HeaderData header;
-        SimulationMaintenanceData simulationMaintenanceData = new SimulationMaintenanceData();
-        List<String> issues = new ArrayList<>();
+
+        Map<Integer, MaintenanceData> maintenance = new HashMap<>();
+
+
         BufferedReader br = new BufferedReader(new FileReader(file));
         String line;
 
@@ -31,6 +36,8 @@ public class MaintenanceFileValidator implements Validator {
         int day = 0;
         int newDay;
         int expected, count;
+        int totalLines = 0, totalControls = 0, totalDays = 0;
+
         String control;
 
         Matcher matcher;
@@ -45,13 +52,32 @@ public class MaintenanceFileValidator implements Validator {
                 if (newDay <= day)
                     throw new FileValidationException("Maintenance File Days should be ordered and start at Day 1");
                 day = newDay;
-                System.out.println(String.format("DAY %d",day));
+                totalDays += 1;
+                totalLines += 1;
+                totalControls += 1;
+                System.out.println(String.format("DAY %d", day));
+            } else if (line.startsWith("T")) {
+                matcher = trailerPattern.matcher(line);
+                if (matcher.matches()) {
+                    int expectedLines = Integer.valueOf(matcher.group(1));
+                    int expectedControls = Integer.valueOf(matcher.group(2));
+                    int expectedDays = Integer.valueOf(matcher.group(3));
+                    if (expectedLines != totalLines || expectedControls != totalControls || expectedDays != totalDays)
+                        throw new MaintenanceFileValidationException("Line Counts/Controls Don't add up");
+                    else
+                        break;
+                } else {
+                    throw new MaintenanceFileValidationException("Unable to Parse line");
+                }
+
             } else if (day > 0) {
                 matcher = controlPattern2.matcher(line);
                 if (matcher.matches()) {
                     expected = Integer.valueOf(matcher.group(2));
                     count = 0;
                     control = matcher.group(1);
+                    totalLines += 1;
+                    totalControls += 1;
                     switch (control) {
                         case "EDGE":
                             while (count < expected) {
@@ -60,16 +86,13 @@ public class MaintenanceFileValidator implements Validator {
                                     continue;
                                 matcher = edgePattern.matcher(line);
                                 if (!matcher.matches())
-                                    issues.add("Invalid Edge Found! Skipping");
+                                    updater.getIssues().add("Invalid Edge Found! Skipping");
                                 else {
-                                    MaintenanceData smd;
-                                    if (simulationMaintenanceData.getDays().containsKey(day)) {
-                                        smd = simulationMaintenanceData.getDays().get(day);
-                                    } else {
-                                        smd = new MaintenanceData();
-                                        simulationMaintenanceData.getDays().put(day, smd);
+                                    if (!maintenance.containsKey(day)) {
+                                        maintenance.put(day, new MaintenanceData());
                                     }
-                                    smd.getEdges().add(new EdgeMaintenanceData(Integer.valueOf(matcher.group(3)), matcher.group(1), matcher.group(2)));
+
+                                    maintenance.get(day).getEdges().add(new EdgeMaintenanceData(Integer.valueOf(matcher.group(3)), matcher.group(1), matcher.group(2)));
                                 }
                                 count += 1;
                             }
@@ -83,16 +106,12 @@ public class MaintenanceFileValidator implements Validator {
                                     continue;
                                 matcher = trainPattern.matcher(line);
                                 if (!matcher.matches())
-                                    issues.add("Invalid Train Found! Skipping");
+                                    updater.getIssues().add("Invalid Train Found! Skipping");
                                 else {
-                                    MaintenanceData smd;
-                                    if (simulationMaintenanceData.getDays().containsKey(day)) {
-                                        smd = simulationMaintenanceData.getDays().get(day);
-                                    } else {
-                                        smd = new MaintenanceData();
-                                        simulationMaintenanceData.getDays().put(day, smd);
+                                    if (!maintenance.containsKey(day)) {
+                                        maintenance.put(day, new MaintenanceData());
                                     }
-                                    smd.getTrains().add(new TrainMaintenanceData(matcher.group(1), Integer.valueOf(matcher.group(2))));
+                                    maintenance.get(day).getTrains().add(new TrainMaintenanceData(matcher.group(1), Integer.valueOf(matcher.group(2))));
                                 }
                                 count += 1;
                             }
@@ -100,7 +119,7 @@ public class MaintenanceFileValidator implements Validator {
 
 
                     }
-                    lines += expected;
+                    totalLines += count;
 
 
                 }
@@ -109,9 +128,30 @@ public class MaintenanceFileValidator implements Validator {
 
 
         }
-        System.out.println(String.format("DAY %d",day));
-        System.out.println(simulationMaintenanceData);
         br.close();
+
+        maintenance.forEach((key, value) -> {
+            updater.getUpdates().add(simulation -> {
+                        if (value != null && value.getEdges() != null && !value.getEdges().isEmpty()) {
+                            if (!simulation.getEdgeMaintenance().containsKey(key)) {
+                                simulation.getEdgeMaintenance().put(key, new ArrayList<>());
+                            }
+                            simulation.getEdgeMaintenance().get(key).addAll(value.getEdges());
+
+                        }
+                        if (value != null && value.getTrains() != null && !value.getTrains().isEmpty()) {
+                            if (!simulation.getTrainMaintenance().containsKey(key)) {
+                                simulation.getTrainMaintenance().put(key, new ArrayList<>());
+                            }
+                            simulation.getTrainMaintenance().get(key).addAll(value.getTrains());
+
+                        }
+
+                    }
+            );
+        });
+
+
     }
 
     private boolean controlLineCheck(String line, String control, int expectedCount, int count) throws FileValidationException {
@@ -123,13 +163,5 @@ public class MaintenanceFileValidator implements Validator {
             throw new FileValidationException(String.format("Expected %s count to be %d, found %d", control, expectedCount, count));
         return false;
     }
-    public static void main(String[] args) {
 
-
-        try {
-            (new MaintenanceFileValidator()).validate(new File("sample2.txt"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }

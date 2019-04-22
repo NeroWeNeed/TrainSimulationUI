@@ -24,6 +24,8 @@ public class Model {
     private BooleanProperty baselineSet = new SimpleBooleanProperty(false);
     private ObjectProperty<Configuration> configuration = new SimpleObjectProperty<>(new Configuration());
     private ListProperty<SimulationDay> simulationDays = new SimpleListProperty<>(FXCollections.observableArrayList());
+    private int sequence = 0;
+    private int day = 0;
 
     public ObservableList<SimulationDay> getSimulationDays() {
         return simulationDays.get();
@@ -55,5 +57,21 @@ public class Model {
 
     public void setConfiguration(Configuration configuration) {
         this.configuration.set(configuration);
+    }
+
+    public int getSequence() {
+        return sequence;
+    }
+
+    public void setSequence(int sequence) {
+        this.sequence = sequence;
+    }
+
+    public int getDay() {
+        return day;
+    }
+
+    public void setDay(int day) {
+        this.day = day;
     }
 }
