@@ -21,4 +21,8 @@ public class SimulationDay {
     public String toString() {
         return "Day " + day;
     }
+
+    public Integer getDay() {
+        return day;
+    }
 }

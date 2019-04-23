@@ -3,6 +3,7 @@
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="org.nwn.ts.controller.RootController"
@@ -13,29 +14,28 @@
         <MenuBar>
             <Menu text="File">
                 <MenuItem text="Run Simulation" onAction="#menuFileStartSimulation"/>
-                <MenuItem text="Reset" onAction="#menuFileResetSimulation"/>
-                <MenuItem text="Export CSV" onAction="#menuFileExportCSV"/>
+                <MenuItem text="Reset" fx:id="fileReset" onAction="#menuFileResetSimulation"/>
             </Menu>
             <Menu text="Edit">
-                <MenuItem text="Edit Trains"/>
-                <MenuItem text="Edit Railway"/>
+                <MenuItem text="Edit Trains" fx:id="editTrains" onAction="#menuEditTrains"/>
+                <MenuItem text="Edit Railway" fx:id="editRails" onAction="#menuEditRails"/>
             </Menu>
             <Menu text="View">
-                <MenuItem text="View Recommendations"/>
-                <MenuItem text="Compare to Older Run"/>
+                <MenuItem text="View Recommendations" onAction="#viewRecommendations"/>
+
             </Menu>
 
         </MenuBar>
 
     </top>
     <center>
-        <Canvas style="-fx-background-color: #f6f5f5;">
+        <ScrollPane fx:id="metricsContainer" fitToWidth="true">
+            <fx:include source="simulation-day.fxml" fx:id="simulationDay"/>
 
-        </Canvas>
+        </ScrollPane>
     </center>
     <left>
-        <fx:include source="root-statistics.fxml"/>
-
+        <ListView fx:id="simulationDaysListView"/>
 
 
     </left>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.geometry.Insets?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="org.nwn.ts.controller.EditorRailwayController"
+>
+    <ListView fx:id="rails" VBox.vgrow="ALWAYS">
+
+        <VBox.margin>
+            <Insets top="10" left="5" bottom="5" right="5"/>
+        </VBox.margin>
+        <contextMenu>
+            <ContextMenu fx:id="contextMenu">
+                <items>
+                    <MenuItem text="Delete Selected" onAction="#contextmenuDelete"/>
+                    <MenuItem text="Toggle Selected" onAction="#contextmenuToggle"/>
+                    <MenuItem text="Enable Selected" onAction="#contextmenuEnable"/>
+                    <MenuItem text="Disable Selected" onAction="#contextmenuDisable"/>
+                </items>
+
+            </ContextMenu>
+        </contextMenu>
+    </ListView>
+    <HBox spacing="10" VBox.vgrow="ALWAYS">
+        <ComboBox fx:id="station1" HBox.hgrow="ALWAYS"/>
+        <ComboBox fx:id="station2" HBox.hgrow="ALWAYS"/>
+        <TextField fx:id="totalWeight" promptText="Distance"/>
+        <ComboBox fx:id="restrictionStartTime"/>
+        <ComboBox fx:id="restrictionEndTime"/>
+        <Button fx:id="addButton" text="Add" onAction="#addButtonHandler"/>
+
+    </HBox>
+</VBox>

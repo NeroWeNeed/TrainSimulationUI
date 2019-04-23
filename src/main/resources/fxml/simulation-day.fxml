@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.TitledPane.*?>
+
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+<Accordion xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="org.nwn.ts.controller.SimulationDayController"
+      fx:id="container" >
+
+        <panes>
+            <TitledPane text="Train Metrics">
+                <TableView fx:id="trainMetrics">
+
+                    <columns>
+                        <TableColumn text="Name" prefWidth="50">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="name"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn text="Type">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="trainType"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn text="Distance Traveled">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="totalDistanceTraveled"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn text="Collisions">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="totalCollision"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn text="Distance">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="totalWeight"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                    </columns>
+
+                </TableView>
+            </TitledPane>
+            <TitledPane text="Station Metrics">
+                <TableView fx:id="stationMetrics">
+                    <columns>
+                        <TableColumn text="Name">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="name"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn text="Trains Stopped">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="trainsStopped"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn text="Items Picked Up">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="itemsPickedUp"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn text="Items Dropped Off">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="itemsDroppedOff"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn text="Visits">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="visits"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                    </columns>
+
+                </TableView>
+            </TitledPane>
+            <TitledPane text="Track Metrics">
+                <TableView fx:id="trackMetrics">
+                    <columns>
+                        <TableColumn text="Name">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="name"/>
+                            </cellValueFactory>
+                        </TableColumn>
+
+                        <TableColumn text="Visits">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="visits"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                    </columns>
+
+                </TableView>
+            </TitledPane>
+            <TitledPane text="Hub Metrics">
+                <TableView fx:id="hubMetrics">
+                    <columns>
+                        <TableColumn text="Name">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="name"/>
+                            </cellValueFactory>
+                        </TableColumn>
+
+                        <TableColumn text="Visits">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="visits"/>
+                            </cellValueFactory>
+                        </TableColumn>
+                    </columns>
+
+                </TableView>
+            </TitledPane>
+        </panes>
+
+
+
+
+
+</Accordion>

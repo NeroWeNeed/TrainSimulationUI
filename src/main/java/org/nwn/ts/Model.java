@@ -1,14 +1,13 @@
 package org.nwn.ts;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.nwn.ts.simulation.TrainSimulation;
 import org.nwn.ts.stats.MetricHolder;
 import org.nwn.ts.stats.SimulationDay;
-import org.nwn.ts.util.Configuration;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Model {
     private static Model INSTANCE = new Model();
@@ -21,57 +20,46 @@ public class Model {
 
     }
 
-    private BooleanProperty baselineSet = new SimpleBooleanProperty(false);
-    private ObjectProperty<Configuration> configuration = new SimpleObjectProperty<>(new Configuration());
-    private ListProperty<SimulationDay> simulationDays = new SimpleListProperty<>(FXCollections.observableArrayList());
-    private int sequence = 0;
-    private int day = 0;
 
-    public ObservableList<SimulationDay> getSimulationDays() {
-        return simulationDays.get();
+    private ObjectProperty<TrainSimulation> simulation = new SimpleObjectProperty<>(new TrainSimulation());
+    private ListProperty<SimulationDay> metrics = new SimpleListProperty<>(FXCollections.observableArrayList());
+    private BooleanBinding metricsExists = Bindings.isNotEmpty(metrics);
+
+
+    public Boolean metricsExists() {
+        return metricsExists.get();
     }
 
-    public ListProperty<SimulationDay> simulationDaysProperty() {
-        return simulationDays;
+    public BooleanBinding metricsExistsProperty() {
+        return metricsExists;
     }
 
-    public boolean getBaselineSet() {
-        return baselineSet.get();
+    public ObservableList<SimulationDay> getMetrics() {
+
+        return metrics.get();
     }
 
-    public BooleanProperty baselineSetProperty() {
-        return baselineSet;
+    public ListProperty<SimulationDay> metricsProperty() {
+        return metrics;
     }
 
-    public void setBaselineSet(boolean baselineSet) {
-        this.baselineSet.set(baselineSet);
+    public void setMetrics(ObservableList<SimulationDay> metrics) {
+        this.metrics.set(metrics);
     }
 
-    public Configuration getConfiguration() {
-        return configuration.get();
+
+
+    public TrainSimulation getSimulation() {
+        return simulation.get();
     }
 
-    public ObjectProperty<Configuration> configurationProperty() {
-        return configuration;
+    public ObjectProperty<TrainSimulation> simulationProperty() {
+        return simulation;
     }
 
-    public void setConfiguration(Configuration configuration) {
-        this.configuration.set(configuration);
+    public void setSimulation(TrainSimulation simulation) {
+        this.simulation.set(simulation);
     }
 
-    public int getSequence() {
-        return sequence;
-    }
 
-    public void setSequence(int sequence) {
-        this.sequence = sequence;
-    }
-
-    public int getDay() {
-        return day;
-    }
-
-    public void setDay(int day) {
-        this.day = day;
-    }
 }

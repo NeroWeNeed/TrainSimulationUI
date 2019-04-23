@@ -9,8 +9,7 @@
 <?import javafx.scene.control.TableView?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="org.nwn.ts.controller.StatisticsController"
-            prefHeight="400.0" prefWidth="600.0" fx:id="container">
+            fx:controller="org.nwn.ts.controller.StatisticsController">
     <left>
         <ListView fx:id="simulationDaysListView"/>
 

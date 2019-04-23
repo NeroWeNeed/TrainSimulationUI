@@ -26,7 +26,7 @@ public class StatisticsController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        simulationDaysListView.itemsProperty().bind(Model.getInstance().simulationDaysProperty());
+        simulationDaysListView.itemsProperty().bind(Model.getInstance().metricsProperty());
 
 
     }

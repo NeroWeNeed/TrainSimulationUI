@@ -1,19 +1,25 @@
 package org.nwn.ts.util;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import org.nwn.ts.util.validator.data.TrainConfigurationData;
+import org.nwn.ts.simulation.data.TrainConfigurationData;
 
 public class TrainConfigurationProperty {
     private IntegerProperty fuelCapacity = new SimpleIntegerProperty(0);
     private IntegerProperty fuelCost = new SimpleIntegerProperty(0);
     private IntegerProperty speed = new SimpleIntegerProperty(0);
     private IntegerProperty capacity = new SimpleIntegerProperty(0);
+    private BooleanBinding valid = Bindings.createBooleanBinding(() -> getFuelCapacity() > 0 && getFuelCost() > 0 && getSpeed() > 0 && getCapacity() > 0, fuelCapacity, fuelCost, speed, capacity);
 
     public TrainConfigurationProperty() {
+
+
     }
+
     public TrainConfigurationData toData() {
-        return new TrainConfigurationData(fuelCapacity.get(),fuelCost.get(),speed.get(),capacity.get());
+        return new TrainConfigurationData(fuelCapacity.get(), fuelCost.get(), speed.get(), capacity.get());
     }
 
     public int getFuelCapacity() {
@@ -62,5 +68,20 @@ public class TrainConfigurationProperty {
 
     public void setCapacity(int capacity) {
         this.capacity.set(capacity);
+    }
+
+    public void set(TrainConfigurationData data) {
+        this.setFuelCapacity(data.getFuelCapacity());
+        this.setCapacity(data.getCapacity());
+        this.setFuelCost(data.getFuelCost());
+        this.setSpeed(data.getSpeed());
+    }
+
+    public Boolean isValid() {
+        return valid.get();
+    }
+
+    public BooleanBinding validProperty() {
+        return valid;
     }
 }

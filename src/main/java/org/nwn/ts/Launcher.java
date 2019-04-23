@@ -21,7 +21,13 @@ public class Launcher extends Application {
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(RootController.FXML_LOCATION);
         Scene scene = new Scene(root);
+        DataProvider.generateHubs(100);
+        DataProvider.generateStations(100, 50, 10);
+        DataProvider.generateTrains(200);
+        DataProvider.generateRails(300);
+        DataProvider.generateSimulationDays(14);
         primaryStage.setScene(scene);
+
         primaryStage.show();
 
     }

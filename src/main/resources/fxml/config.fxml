@@ -12,68 +12,103 @@
     <center>
         <HBox>
             <VBox HBox.hgrow="ALWAYS">
+                <Label text="Files">
+                    <VBox.margin>
+                        <Insets top="20" left="10" bottom="5" right="5"/>
+                    </VBox.margin>
+                </Label>
+                <Separator/>
                 <FilePicker promptText="Layout File" fx:id="structureFilePicker">
                     <VBox.margin>
-                        <Insets top="20" left="20" bottom="20" right="20"/>
+                        <Insets top="10" left="10" bottom="5" right="5"/>
                     </VBox.margin>
                 </FilePicker>
                 <FilePicker promptText="Configuration File" fx:id="configurationFilePicker">
                     <VBox.margin>
-                        <Insets top="20" left="20" bottom="20" right="20"/>
+                        <Insets top="5" left="10" bottom="5" right="5"/>
                     </VBox.margin>
                 </FilePicker>
                 <FilePicker promptText="Maintenance File" fx:id="maintenanceFilePicker">
                     <VBox.margin>
-                        <Insets top="20" left="20" bottom="20" right="20"/>
+                        <Insets top="5" left="10" bottom="5" right="5"/>
                     </VBox.margin>
                 </FilePicker>
 
                 <FilePicker promptText="Daily Routes File" fx:id="dailyRoutesFilePicker">
                     <VBox.margin>
-                        <Insets top="20" left="20" bottom="20" right="20"/>
+                        <Insets top="5" left="10" bottom="5" right="5"/>
                     </VBox.margin>
                 </FilePicker>
                 <FilePicker promptText="Repeatable Routes File" fx:id="repeatableRoutesFilePicker">
                     <VBox.margin>
-                        <Insets top="20" left="20" bottom="20" right="20"/>
+                        <Insets top="5" left="10" bottom="5" right="5"/>
                     </VBox.margin>
                 </FilePicker>
                 <FilePicker promptText="Output File Directory" fx:id="outputFilePicker" directoryPicker="true">
                     <VBox.margin>
-                        <Insets top="20" left="20" bottom="20" right="20"/>
+                        <Insets top="5" left="10" bottom="5" right="5"/>
                     </VBox.margin>
                 </FilePicker>
+
+            </VBox>
+            <Separator orientation="VERTICAL"/>
+
+
+            <VBox HBox.hgrow="ALWAYS">
+                <Label text="General Configuration">
+                    <VBox.margin>
+                        <Insets top="20" left="5" bottom="5" right="5"/>
+                    </VBox.margin>
+                </Label>
+                <Separator/>
+                <VBox VBox.vgrow="ALWAYS">
+                    <TextField fx:id="duration" promptText="Duration">
+                        <VBox.margin>
+                            <Insets top="10" left="5" bottom="5" right="5"/>
+                        </VBox.margin>
+
+                    </TextField>
+                    <TextField fx:id="fuelPerHub" promptText="Transportation Cost">
+                        <VBox.margin>
+                            <Insets top="5" left="5" bottom="5" right="5"/>
+                        </VBox.margin>
+
+                    </TextField>
+                    <TextField fx:id="crewsPerHub" promptText="Crews Per Hub">
+                        <VBox.margin>
+                            <Insets top="5" left="5" bottom="5" right="5"/>
+                        </VBox.margin>
+
+                    </TextField>
+                </VBox>
+                <fx:include fx:id="freightTrainConfig" source="config-train.fxml" HBox.hgrow="ALWAYS"/>
             </VBox>
             <Separator orientation="VERTICAL"/>
             <VBox HBox.hgrow="ALWAYS">
+                <Label text="Weather Configuration">
+                    <VBox.margin>
+                        <Insets top="20" left="5" bottom="5" right="5"/>
+                    </VBox.margin>
+                </Label>
+                <Separator/>
+                <VBox VBox.vgrow="ALWAYS">
+                    <Slider fx:id="weatherSeverity">
+                        <VBox.margin>
+                            <Insets top="10" left="5" bottom="5" right="5"/>
+                        </VBox.margin>
+                    </Slider>
+                    <ComboBox fx:id="weatherType">
+                        <VBox.margin>
+                            <Insets top="5" left="0" bottom="5" right="5"/>
+                        </VBox.margin>
+                    </ComboBox>
 
-                <TextField fx:id="duration" promptText="Duration">
-                    <VBox.margin>
-                        <Insets top="20" left="20" bottom="20" right="20"/>
-                    </VBox.margin>
-                </TextField>
-                <TextField fx:id="transportationCost" promptText="Transportation Cost">
-                    <VBox.margin>
-                        <Insets top="20" left="20" bottom="20" right="20"/>
-                    </VBox.margin>
-                </TextField>
-                <HBox>
-                    <fx:include fx:id="freightTrainConfig" source="config-train.fxml"/>
-                    <fx:include fx:id="passengerTrainConfig" source="config-train.fxml"/>
+                </VBox>
 
-                </HBox>
-
-                <Slider fx:id="weatherSeverity">
-                    <VBox.margin>
-                        <Insets top="20" left="20" bottom="20" right="20"/>
-                    </VBox.margin>
-                </Slider>
-                <HBox fx:id="weatherTypes" alignment="CENTER" spacing="10">
-                    <VBox.margin>
-                        <Insets top="20" left="20" bottom="20" right="20"/>
-                    </VBox.margin>
-                </HBox>
+                <fx:include fx:id="passengerTrainConfig" source="config-train.fxml" HBox.hgrow="ALWAYS"/>
             </VBox>
+
+
         </HBox>
 
     </center>

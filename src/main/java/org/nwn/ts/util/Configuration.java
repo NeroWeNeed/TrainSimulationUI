@@ -1,7 +1,7 @@
 package org.nwn.ts.util;
 
-import org.nwn.ts.stats.TrainType;
-import org.nwn.ts.util.validator.data.TrainConfigurationData;
+import org.nwn.ts.simulation.data.TrainType;
+import org.nwn.ts.simulation.data.TrainConfigurationData;
 
 import java.io.File;
 import java.util.HashMap;

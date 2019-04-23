@@ -1,41 +1,36 @@
 package org.nwn.ts.controller;
 
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.stage.Stage;
-import javafx.util.converter.IntegerStringConverter;
-import javafx.util.converter.NumberStringConverter;
-import org.nwn.ts.Model;
 import org.nwn.ts.exceptions.FileValidationException;
-import org.nwn.ts.stats.TrainType;
-import org.nwn.ts.util.Configuration;
+import org.nwn.ts.simulation.data.TrainType;
+import org.nwn.ts.util.FieldFormatter;
 import org.nwn.ts.util.FilePicker;
+import org.nwn.ts.simulation.TrainSimulation;
+import org.nwn.ts.simulation.TrainSimulationConfiguration;
+import org.nwn.ts.simulation.TrainSimulationOverrides;
+import org.nwn.ts.simulation.TrainSimulationUpdater;
 import org.nwn.ts.util.TrainConfigurationProperty;
-import org.nwn.ts.util.validator.data.TrainSimulation;
-import org.nwn.ts.util.validator.data.TrainSimulationConfiguration;
-import org.nwn.ts.util.validator.data.TrainSimulationOverrides;
-import org.nwn.ts.util.validator.data.TrainSimulationUpdater;
+import org.nwn.ts.validator.ConfigurationFileValidator;
 
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class ConfigController implements Initializable {
     public static URL FXML_LOCATION = ConfigController.class.getResource("/fxml/config.fxml");
     private static final String WEATHER_TYPE_VALUE = "weatherTypeValue";
+
     private TrainSimulationOverrides overrides = new TrainSimulationOverrides();
-    private Map<TrainType, TrainConfigController> trainConfigs = new HashMap<>();
     @FXML
     private Parent container;
 
@@ -73,82 +68,96 @@ public class ConfigController implements Initializable {
 
 
     @FXML
-    private TextField transportationCost;
-
-    @FXML
     private Button startSimulationButton;
 
     @FXML
-    private TrainConfigController passengerTrainConfig;
+    private TrainConfigController freightTrainConfigController;
 
     @FXML
-    private TrainConfigController freightTrainConfig;
-
+    private TrainConfigController passengerTrainConfigController;
 
     @FXML
-    private HBox weatherTypes;
+    private ComboBox<TrainSimulation.WeatherType> weatherType;
 
-    private ToggleGroup weatherTypeToggleGroup = new ToggleGroup();
 
     public ConfigController() {
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        ToggleButton toggleButton;
-        for (Configuration.WeatherType type : Configuration.WeatherType.values()) {
-            toggleButton = new ToggleButton(type.name());
-            toggleButton.getProperties().put(WEATHER_TYPE_VALUE, type);
-            HBox.setHgrow(toggleButton, Priority.ALWAYS);
-            toggleButton.setToggleGroup(weatherTypeToggleGroup);
-            weatherTypes.getChildren().add(toggleButton);
-        }
-        trainConfigs.put(TrainType.FREIGHT, freightTrainConfig);
-        trainConfigs.put(TrainType.PASSENGER, passengerTrainConfig);
-        freightTrainConfig.setType(TrainType.FREIGHT);
-        passengerTrainConfig.setType(TrainType.PASSENGER);
 
-        TrainConfigurationProperty property;
-        TrainConfigController config;
-        for (TrainType value : TrainType.values()) {
-            property = overrides.getTrainConfiguration(value);
-            config = trainConfigs.get(value);
-
-            Bindings.bindBidirectional(config.getFuelCapacity().textProperty(), property.fuelCapacityProperty(), new NumberStringConverter());
-            Bindings.bindBidirectional(config.getCapacity().textProperty(), property.capacityProperty(), new NumberStringConverter());
-            Bindings.bindBidirectional(config.getSpeed().textProperty(), property.speedProperty(), new NumberStringConverter());
-            Bindings.bindBidirectional(config.getFuelCost().textProperty(), property.fuelCostProperty(), new NumberStringConverter());
-
+        for (TrainSimulation.WeatherType type : TrainSimulation.WeatherType.values()) {
+            weatherType.getItems().add(type);
         }
 
-        Bindings.bindBidirectional(crewsPerHub.textProperty(), overrides.crewsPerHubProperty(), new NumberStringConverter());
-        Bindings.bindBidirectional(fuelPerHub.textProperty(), overrides.fuelPerHubProperty(), new NumberStringConverter());
-        Bindings.bindBidirectional(duration.textProperty(), overrides.daysToRunProperty(), new NumberStringConverter());
-        Bindings.bindBidirectional(weatherSeverity.valueProperty(), overrides.weatherSeverityProperty());
 
+        freightTrainConfigController.setType(TrainType.FREIGHT);
+        passengerTrainConfigController.setType(TrainType.PASSENGER);
+        weatherType.getSelectionModel().select(0);
 
+        configurationFilePicker.getValueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
 
+                ConfigurationFileValidator validator = new ConfigurationFileValidator();
+                try {
+                    validator.validate(newValue, null);
+                    Integer parsedCrewsPerHub = validator.getTotalCrews();
+                    if (parsedCrewsPerHub != null)
+                        overrides.setCrewsPerHub(parsedCrewsPerHub);
+                    Integer parsedRunDuration = validator.getRunDuration();
+                    if (parsedRunDuration != null)
+                        overrides.setDaysToRun(parsedRunDuration);
+                    Integer parsedFuelCapacity = validator.getHubFuelCapacity();
+                    if (parsedFuelCapacity != null)
+                        overrides.setFuelPerHub(parsedFuelCapacity);
+                    validator.getTrainConfigurations().forEach((key, value) -> {
+                        switch (key) {
 
+                            case FREIGHT:
+                                freightTrainConfigController.set(value);
+                                break;
+                            case PASSENGER:
+                                passengerTrainConfigController.set(value);
+                                break;
+                        }
+                    });
+                } catch (FileValidationException | IOException e) {
 
+                }
+            }
+        });
 
+        Bindings.bindBidirectional(crewsPerHub.textProperty(), overrides.crewsPerHubProperty(), new FieldFormatter());
+        Bindings.bindBidirectional(duration.textProperty(), overrides.daysToRunProperty(), new FieldFormatter());
+        Bindings.bindBidirectional(fuelPerHub.textProperty(), overrides.fuelPerHubProperty(), new FieldFormatter());
 
-        //Bindings
-        BooleanBinding baselineSetInverse = Model.getInstance().baselineSetProperty().not();
-
-        structureFilePicker.disableProperty().bind(Model.getInstance().baselineSetProperty());
-        maintenanceFilePicker.disableProperty().bind(Model.getInstance().baselineSetProperty());
-        configurationFilePicker.disableProperty().bind(Model.getInstance().baselineSetProperty());
-        dailyRoutesFilePicker.disableProperty().bind(Model.getInstance().baselineSetProperty());
-        repeatableRoutesFilePicker.disableProperty().bind(Model.getInstance().baselineSetProperty());
-
-        duration.disableProperty().bind(baselineSetInverse);
-        transportationCost.disableProperty().bind(baselineSetInverse);
-        weatherSeverity.disableProperty().bind(baselineSetInverse);
-        weatherTypes.disableProperty().bind(baselineSetInverse);
         startSimulationButton.disableProperty().bind(Bindings.createBooleanBinding(() -> structureFilePicker.getValue() != null &&
-                        configurationFilePicker.getValue() != null,
-                structureFilePicker.getValueProperty(), configurationFilePicker.getValueProperty()).not());
+                        configurationFilePicker.getValue() != null &&
+                        dailyRoutesFilePicker.getValue() != null &&
+                        overrides.getValid() && overrides.getTrainConfigurations().values().stream().allMatch(TrainConfigurationProperty::isValid)
 
+                ,
+
+                submitButtonDependencies()).not());
+/*        startSimulationButton.disableProperty().bind(Bindings.createBooleanBinding(() -> structureFilePicker.getValue() != null &&
+                        dailyRoutesFilePicker.getValue() != null
+                ,
+
+                structureFilePicker.getValueProperty(), configurationFilePicker.getValueProperty()).not().or(overrides.validProperty().not()));*/
+
+
+    }
+
+    private Observable[] submitButtonDependencies() {
+        ArrayList<Observable> observables = new ArrayList<>();
+        observables.add(structureFilePicker.getValueProperty());
+        observables.add(dailyRoutesFilePicker.getValueProperty());
+        observables.add(overrides.validProperty());
+        overrides.getTrainConfigurations().values().forEach(x -> {
+
+            observables.add(x.validProperty());
+        });
+        return observables.stream().toArray(Observable[]::new);
     }
 
     @FXML
@@ -200,13 +209,13 @@ public class ConfigController implements Initializable {
     }
 
     protected void updateConfiguration() {
-        if (!Model.getInstance().getBaselineSet()) {
+/*        if (!Model.getInstance().getBaselineSet()) {
             Model.getInstance().getConfiguration().setLayoutFile(structureFilePicker.getValue());
             Model.getInstance().getConfiguration().setMaintenanceFile(maintenanceFilePicker.getValue());
             Model.getInstance().getConfiguration().setConfigurationFile(configurationFilePicker.getValue());
             Model.getInstance().getConfiguration().setDailyRoutesFile(dailyRoutesFilePicker.getValue());
             Model.getInstance().getConfiguration().setRepeatableRoutesFile(repeatableRoutesFilePicker.getValue());
-        }
+        }*/
     }
 
 

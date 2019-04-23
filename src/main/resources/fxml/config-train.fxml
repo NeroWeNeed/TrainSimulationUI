@@ -6,22 +6,31 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
+<?import javafx.geometry.Insets?>
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="org.nwn.ts.controller.TrainConfigController"
 >
     <Label fx:id="name"/>
-    <TextField fx:id="fuelCapacity">
+    <Separator/>
+    <VBox spacing="10">
+        <TextField fx:id="fuelCapacity" promptText="Fuel Capacity">
 
-    </TextField>
-    <TextField fx:id="fuelCost">
+        </TextField>
+        <TextField fx:id="fuelCost" promptText="Fuel Cost">
 
 
-    </TextField>
-    <TextField fx:id="speed">
+        </TextField>
+        <TextField fx:id="speed"  promptText="Speed">
 
-    </TextField>
-    <TextField fx:id="capacity">
+        </TextField>
+        <TextField fx:id="capacity"  promptText="Capacity">
 
-    </TextField>
+        </TextField>
+        <VBox.margin>
+            <Insets left="5" top="10" right="5" bottom="10"/>
+        </VBox.margin>
+    </VBox>
+
+
 </VBox>
