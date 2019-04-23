@@ -8,26 +8,31 @@ class track : public node
 {
 private:
 	int weight;
-	int openTime;
-	int closeTime;
+	milTime openTime;
+	milTime closeTime;
 	bool timed;
-	bool good; //True if track may be used
+	bool open; //True if track is open
+	bool down; //True if track is under maintenance
 
 public:
 	track(string _name, int ID, nodeType _type, node* A,
-		node* B, int _weight, int openTime, int closeTime);
+		node* B, int _weight, milTime openTime, milTime closeTime);
 	~track();
 
 	int getWeight();
-	int getOpenTime();
-	int getCloseTime();
+	milTime getOpenTime();
+	milTime getCloseTime();
 	void printInfo();
 
 	bool collisionDetect();
 
-	void setGood();
-	void setBad();
-	bool isGood();
+	void setOpen();
+	void setClosed();
+	void setDown();
+	void setUp();
+	bool isOpen();
+	bool isTimed();
+	bool isDown();
 
 	int getOtherSideID(int thisSideID);
 };

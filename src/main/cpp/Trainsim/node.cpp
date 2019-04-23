@@ -5,6 +5,9 @@ node::node(string _name, int ID, nodeType _type)
 	name = _name;
 	uniqueID = ID;
 	nType = _type;
+
+	nodeStats first;
+	stats.push_back(first);
 }
 
 
@@ -18,6 +21,7 @@ void node::arrival(train* newtrain)
 	if (newtrain != NULL)
 	{
 		trainsHere.push_back(newtrain);
+		stats[stats.size() - 1].trainsThru++;
 	}
 	else
 	{
@@ -199,4 +203,20 @@ train* node::getTrain(int in)
 		return trainsHere.at(in);
 	}
 
+}
+
+void node::statsTrainStop() { stats[stats.size() - 1].trainStops++; }
+
+node::nodeStats node::getNodeStats()
+{
+	nodeStats result = stats[stats.size() - 1];
+	stats.pop_back();
+	return result;
+}
+
+void node::newDayNode()
+{
+	nodeStats newstat;
+	stats.push_back(newstat);
+	cout << endl;
 }

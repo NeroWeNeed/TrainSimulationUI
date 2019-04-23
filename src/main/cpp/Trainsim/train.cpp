@@ -1,9 +1,13 @@
 #include "train.h"
+#include <math.h>
+#include <time.h>
 
 
-
-train::train(string _name, int ID, loadType _type, int speed, node* homeHub, int cap)
+train::train(string _name, int ID, loadType _type, int speed, node* homeHub, int cap, float fuelUse)
 {
+	trainStats first;
+	stats.push_back(first);
+
 	name = _name;
 	uniqueID = ID;
 	Ltype = _type;
@@ -11,18 +15,17 @@ train::train(string _name, int ID, loadType _type, int speed, node* homeHub, int
 	travelSpeedPerMinute = (float)speed / 60;
 	home = homeHub;
 	capacity = cap;
+	fuelPerWeight = fuelUse;
 
 	state = IDLE;
 	location = home;
+	home->arrival(this);
 	direction = NULL;
 	progress = 0.0;
 	fuel = 100.0;
 	crewtime = 0;
 	loadCarried = NULL;
-	rerouting = false;
-	avoidance = false;
 }
-
 
 train::~train()
 {
@@ -40,10 +43,16 @@ void train::teleport(node* dest)
 	}
 }
 
-//TESTING UTILITY DO NOT USE (teleports to next destination)
-void train::teleport()
+void train::teleport(node* dest, node* heading)
 {
-
+	if (dest != NULL)
+	{
+		location->departure(this);
+		location = dest;
+		location->arrival(this);
+		direction = heading;
+		cout << "DEBUG: " << name << " teleported to " << location->getName() << " facing toward " << direction->getName() << endl;
+	}
 }
 
 
@@ -55,7 +64,7 @@ void train::changeLocation()
 	}
 	else
 	{
-		cout << "DEBUG: Old loc: " << location->getName() << "  Old dir: " << direction->getName() << endl;
+		//cout << "DEBUG: Old loc: " << location->getName() << "  Old dir: " << direction->getName() << endl;
 
 		if (location->getNodeType() == HUB || location->getNodeType() == STATION)
 		{
@@ -63,7 +72,7 @@ void train::changeLocation()
 			location = direction;		//enter track
 			location->arrival(this);	//inform track
 			direction = currentPath[currentPath.size() - 1].thisNode; //Get new direction from path
-			cout << "DEBUG: New loc: " << location->getName() << "  new dir: " << direction->getName() << endl;
+			//cout << "DEBUG: New loc: " << location->getName() << "  new dir: " << direction->getName() << endl;
 		}
 		else
 		{
@@ -74,7 +83,7 @@ void train::changeLocation()
 			{
 				node* nextDirection = getNextTrackHeading(); //Find next direction
 				direction = nextDirection;
-				cout << "DEBUG: New loc: " << location->getName() << "  new dir: " << direction->getName() << endl;
+				//cout << "DEBUG: New loc: " << location->getName() << "  new dir: " << direction->getName() << endl;
 			}
 			else //If we are done with the route
 			{
@@ -87,6 +96,8 @@ void train::changeLocation()
 
 
 loadType train::getType() { return Ltype; }
+
+trainState train::getExitState() { return exitState; }
 
 trainState train::getState() { return state; }
 
@@ -106,7 +117,7 @@ string train::getStateName()
 		return "Hauling load";
 
 	case WAIT:
-		return "Waiting";
+		return "Waiting (" + to_string(waitTime - waitProgress) +")";
 
 	case FUEL:
 		return "Refueling";
@@ -149,6 +160,33 @@ node* train::getLocation()
 	}
 }
 
+node* train::getHome()
+{
+	if (home == NULL)
+	{
+		cout << name << "'s home was NULL, somehow." << endl;
+		return NULL;
+	}
+	else
+	{
+		return home;
+
+	}
+}
+
+node * train::getDestination()
+{
+	if (destination == NULL)
+	{
+		cout << "train::getDestination called when destination was NULL" << endl;
+		return NULL;
+	}
+	else
+	{
+		return destination;
+	}
+}
+
 bool train::hasLoad() { return (loadCarried != NULL); }
 
 bool train::hasPath() { return (currentPath.empty() == false); }
@@ -168,7 +206,8 @@ void train::printInfo()
 	string loadName = "None";
 	if (loadCarried != NULL)
 	{
-		loadName = loadCarried->getName();
+		loadName = loadCarried->getName() + " (" + to_string(loadCarried->getAmount()) + ")";
+		if (loadCarried->getAmount() == capacity) loadName = loadName + " (MAX)";
 	}
 
 
@@ -177,7 +216,7 @@ void train::printInfo()
 	if (Ltype == PASSENGER) typeString = "(Passenger)";
 	if (Ltype == FREIGHT) typeString =   "  (Freight)";
 
-	cout << name << ", ID: " << uniqueID << " " << typeString << " Home: " << home->getName() << "  State: " << getStateName();
+	cout << name << ", ID: " << uniqueID << " " << typeString << " Home: " << home->getName() << "  Crew time: " << crewtime << "min " << " Fuel: " << setprecision(3) << fuel << "%  State: " << getStateName();
 
 	cout << endl << PIPE_TR << PIPE_HORZ << PIPE_HORZ << PIPE_DLR;
 	cout << "Location: " << location->getName();
@@ -206,6 +245,11 @@ void train::printInfo()
 		cout << endl << endl;
 
 	}
+}
+
+int train::getCrewTime()
+{
+	return crewtime;
 }
 
 void train::printRoute()
@@ -239,15 +283,15 @@ void train::setExitState(trainState newExitState)
 	exitState = newExitState;
 }
 
-void train::setRoute(vector<route::record> newRoute) 
+void train::setPath(vector<route::record> newRoute) 
 { 
 	if (newRoute.size() <= 1)
 	{
-		cout << "train::setRoute encountered a route with one or less entries given to " << name << " at " << location->getName() << endl;
+		cout << "train::setPath encountered a route with one or less entries given to " << name << " at " << location->getName() << endl;
 	}
 	else if (location != newRoute[newRoute.size() - 1].thisNode)
 	{
-		cout << "train::setRoute passed a route to " << name << " that does not begin at its location " << location->getName() << endl;
+		cout << "train::setPath passed a route to " << name << " that does not begin at its location " << location->getName() << endl;
 	}
 	else
 	{
@@ -255,8 +299,6 @@ void train::setRoute(vector<route::record> newRoute)
 		currentPath.pop_back();
 		direction = getNextTrackHeading();
 		destination = currentPath[0].thisNode; //Set the destination
-		cout << "DEBUG: " << location->getName() << " to direction " << direction->getName() << endl;
-
 	}
 
 }
@@ -273,8 +315,15 @@ void train::seekLoad(load* newLoad)
 	}
 	else
 	{
-		loadSought = newLoad;
-		destination = loadSought->getSpawn();
+		if (newLoad->getType() != Ltype)
+		{
+			cout << name << " was assigned a load of incorrect type." << endl;
+		}
+		else
+		{
+			loadSought = newLoad;
+			destination = loadSought->getSpawn();
+		}
 	}
 }
 
@@ -293,13 +342,19 @@ void train::pickupLoad(milTime when)
 		loadCarried = loadSought;
 		loadCarried->setPickupTime(when);
 		loadSought = NULL;
+
+		if (Ltype == FREIGHT)
+		{
+			int size = loadCarried->getAmount();
+			stats[stats.size() - 1].totalCarried += size;
+			if (size > stats[stats.size() - 1].maxCarried) stats[stats.size() - 1].maxCarried = size;
+		}
 	}
 	else
 	{
 		cout << name << " attempted to pick up a load of incorrect load type" << endl;
 	}
 }
-
 
 void train::dropoffLoad(milTime when)
 {
@@ -307,17 +362,50 @@ void train::dropoffLoad(milTime when)
 	{
 		cout << name << " attempted to drop off a load despite not having one" << endl;
 	}
-	else if (Ltype == loadSought->getType())
+	else if (Ltype == loadCarried->getType())
 	{
 		loadCarried->setDropoffTime(when);
+		if (Ltype == PASSENGER)
+		{
+			int amt = loadCarried->getAmount();
+			loadCarried->subPassengers(amt);
+		}
 		loadCarried = NULL;
 	}
 	else
 	{
-		cout << name << " attempted to pick up a load of incorrect load type" << endl;
+		cout << name << " attempted to drop off a load of incorrect load type" << endl;
 	}
 }
 
+void train::transferLoad(milTime when, int minOn, int maxOn, int minOff, int maxOff)
+{
+	cout << "INPUTS: " << minOn << " - " << maxOn << ", " << minOff << " - " << maxOff << endl;
+	if (loadCarried == NULL)
+	{
+		cout << name << " attempted to transfer passengers despite not having a load." << endl;
+	}
+	else if (Ltype == loadCarried->getType())
+	{
+		srand(time(NULL));
+		int amountOn = rand() % (maxOn - minOn + 1) + minOn;
+		int amountOff = rand() % (maxOff - minOff + 1) + minOff;
+		cout << "debug: get passengers: " << amountOn << endl;
+		cout << "debug: lse passengers: " << amountOff << endl;
+
+		stats[stats.size() - 1].totalPassengers += amountOn;
+
+		loadCarried->subPassengers(amountOff);
+		if (amountOn + loadCarried->getAmount() > capacity) amountOn = capacity - loadCarried->getAmount();
+		loadCarried->addPassengers(amountOn);
+
+		stats[stats.size() - 1].totalCarried += amountOn;
+	}
+	else
+	{
+		cout << name << " attempted to transfer passengers but has a load type mismatch with " << loadCarried->getName() << endl;
+	}
+}
 
 
 void train::move(int* minutes)
@@ -327,88 +415,108 @@ void train::move(int* minutes)
 		cout << name << " was called to move but does not have a path right now." << endl;
 		return;
 	}
-	//If we're on a hub, depart when safe
-	if (location->getNodeType() == HUB || location->getNodeType() == STATION)
+	if ((fuel > 0.0) && (crewtime <= 600))
 	{
-		//Check for potential collisions, then embark if safe
-		//Note: direction is already defined here
-		bool safe = true;
-
-		if (direction->getNodeType() == HUBTRACK);	//We're gauranteed to be safe if we are entering a hub con
-		else										//Otherwise check for track activity
+		//If we're on a hub, depart when safe
+		if (location->getNodeType() == HUB || location->getNodeType() == STATION)
 		{
-			for (int i = 0; i < direction->getNumTrainsHere(); i++)
+			//Check for potential collisions, then embark if safe
+			//Note: direction is already defined here
+			bool safe = true;
+
+			if (direction->getNodeType() == HUBTRACK);	//We're gauranteed to be safe if we are entering a hub con
+			else										//Otherwise check for track activity
 			{
-				train* inspecting = direction->getTrain(i);
-				if (inspecting->getHeading() == location) //If any train on the next track is coming towards us
+				for (int i = 0; i < direction->getNumTrainsHere(); i++)
 				{
-					cout << name << " avoided a collision with " << inspecting->getName() << " on " << direction->getName() << endl;
-					safe = false;
+					train* inspecting = direction->getTrain(i);
+					if (inspecting->getHeading() == location) //If any train on the next track is coming towards us
+					{
+						cout << "NOTICE: " << name << " avoided a collision with " << inspecting->getName() << " on " << direction->getName() << endl << endl;
+						safe = false;
+						stats[stats.size() - 1].collisionsAvoided++;
+					}
 				}
 			}
-		}
-		if (safe)
-		{
-			//disembark location to direction (track). set new direction (node)
-			changeLocation();
-			progress = 0.00;
-		}
-		else
-		{
-			return; //keep waiting
-		}
-
-	}
-	
-	//If we're on a track, keep moving
-	if (location->getNodeType() == TRACK || location->getNodeType() == HUBTRACK)
-	{
-		int currentTrackWeight = currentPath[currentPath.size() - 1].weightBefore;
-		float progressPerMinute = (float)travelSpeed / currentTrackWeight;
-		cout << "DEBUG: CTW: " << currentTrackWeight << "   PPM: " << progressPerMinute << endl;
-
-		while (*minutes > 0 && progress < 99.99)
-		{
-			progress = progress + progressPerMinute;
-			cout << "DEBUG: " << progress << "%" << endl;
-			*minutes--;
-		}
-	}
-
-	if (progress >= 99.99)	//If we have arrived at the next station/hub
-							//Due to the nature of the progress meter, we can only enter this branch after leaving a track
-	{
-		changeLocation();
-		progress = 0.00;
-		//currentPath.pop_back();
-
-		cout << "DEBUG: " << location->getName() << " vs " << destination->getName() << endl;
-		if (location == destination) //end of line processing
-		{
-			if (state == SEEK || state == HAUL) state = WAIT;
-			else if (state == FUEL); //Do nothing
-			else if (state == HOME) state = IDLE;
-
-			deleteRoute();
-		}
-		else //Prepare for next movement
-		{
-			node* target = currentPath[currentPath.size() - 1].thisNode;
-
-			node* nextDir = getNextTrackHeading();
-
-
-			if (nextDir == NULL)
+			if (safe)
 			{
-				cout << "train::Move could not find next track to assign to " << name << ". Infodump: " << endl;
-				printInfo();
-				cout << endl;
+				//disembark location to direction (track). set new direction (node)
+				changeLocation();
+				progress = 0.00;
 			}
 			else
 			{
-				direction = nextDir;
+				return; //keep waiting
+			}
+
+		}
+
+		int weightTravelled = 0; //Used for stats
+
+		//If we're on a track, keep moving
+		if (location->getNodeType() == TRACK || location->getNodeType() == HUBTRACK)
+		{
+			int currentTrackWeight = currentPath[currentPath.size() - 1].weightBefore;
+
+			weightTravelled = currentTrackWeight; //Used later, not here
+
+			float progressPerMinute = (float)travelSpeed / currentTrackWeight;
+			float distance = (float)travelSpeed / (60 * *minutes);
+			//cout << "DEBUG: CTW: " << currentTrackWeight << "   PPM: " << progressPerMinute << endl;
+
+			while (*minutes > 0 && progress < 99.99)
+			{
+				progress = progress + progressPerMinute;
+				*minutes--;
+				fuel = fuel - (distance * fuelPerWeight);
+				if (fuel < 0.00) fuel = 0.00;
+
+				stats[stats.size() - 1].fuelUsed += (distance * fuelPerWeight);
+				stats[stats.size() - 1].upTime++;
 			}
 		}
+
+		if (progress >= 99.99)	//If we have arrived at the next station/hub
+								//Due to the nature of the progress meter, we can only enter this branch after leaving a track
+		{
+			stats[stats.size() - 1].distance += weightTravelled; //Update distance stat
+			changeLocation();
+			progress = 0.00;
+			//currentPath.pop_back();
+
+			//cout << "DEBUG: " << location->getName() << " vs " << destination->getName() << endl;
+			if (location == destination) //end of line processing
+			{
+				if (state == SEEK || state == HAUL) state = WAIT;
+				else if (state == FUEL); //Do nothing
+				else if (state == HOME) state = IDLE;
+
+				deleteRoute();
+			}
+			else //Prepare for next movement
+			{
+				node* target = currentPath[currentPath.size() - 1].thisNode;
+
+				node* nextDir = getNextTrackHeading();
+
+
+				if (nextDir == NULL)
+				{
+					cout << "train::Move could not find next track to assign to " << name << ". Infodump: " << endl;
+					printInfo();
+					cout << endl;
+				}
+				else
+				{
+					direction = nextDir;
+				}
+			}
+		}
+	}
+	else
+	{
+		if (fuel <= 0)	cout << name << " tried to move but has been stranded without fuel." << endl;
+		if (crewtime > 600)	cout << name << " tried to move but has exceeded legal crew uptime and has been stopped." << endl;
 	}
 }
 
@@ -447,16 +555,64 @@ void train::setWait(int minutes)
 
 void train::wait(int* minutes)
 {
-	while (*minutes > 0 && waitProgress < waitTime)
+	if (state == WAIT)
 	{
-		waitProgress++;
-		*minutes--;
-	}
+		while ((*minutes > 0) && (waitProgress < waitTime))
+		{
+			waitProgress++;
+			*minutes = *minutes - 1;
+		}
 
-	if (waitProgress >= waitTime)
-	{
-		state = exitState;
-		waitTime = 0;
-		waitProgress = 0;
+		if (waitProgress >= waitTime)
+		{
+			swapping = false; //If we were swapping crews, we aren't anymore
+			state = exitState;
+			waitTime = 0;
+			waitProgress = 0;
+		}
 	}
+	else //Auxiliary waits that aren't actually in the wait state
+	{
+		//Do nothing
+	}
+}
+
+void train::refuel(float amount)
+{
+	fuel = fuel + amount;
+	stats[stats.size() - 1].timesFuelled++;
+	if (fuel > 100.0) fuel = 100.0;
+}
+
+void train::newCrew()
+{
+	crewtime = 0;
+}
+
+void train::addCrewTime(int minutes)
+{
+	crewtime += minutes;
+}
+
+void train::lockCrewTime()
+{
+	//Holds crewtime at 0 while swapping
+	if (swapping) crewtime = 0;
+}
+
+void train::setSwapFlag() { swapping = true; }
+
+void train::addDowntime(int amount) { stats[stats.size() - 1].downTime += amount; }
+
+train::trainStats train::getTrainStats()
+{
+	trainStats result = stats[stats.size() - 1];
+	stats.pop_back();
+	return result;
+}
+
+void train::newDayTrain()
+{
+	trainStats newstat;
+	stats.push_back(newstat);
 }

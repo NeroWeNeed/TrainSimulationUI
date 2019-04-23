@@ -6,6 +6,12 @@ class train; //forward declaration
 
 class node
 {
+public:
+	struct nodeStats
+	{
+		int trainStops = 0;
+		int trainsThru = 0;
+	};
 protected:
 	int uniqueID;
 	string name;
@@ -13,6 +19,7 @@ protected:
 	nodeType nType;
 	vector<train*> trainsHere;
 	vector<node*> connections;
+	vector<nodeStats> stats;
 
 
 public:
@@ -41,5 +48,11 @@ public:
 	int getNumTrainsHere();
 
 	train* getTrain(int in);
+
+	void statsTrainStop();
+
+	nodeStats getNodeStats();
+
+	void newDayNode();
 };
 

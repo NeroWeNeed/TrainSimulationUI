@@ -28,14 +28,29 @@ struct milTime
 	int hour;
 	int min;
 
-	void operator++()
+	bool operator<(const milTime& b)
 	{
-		if (min < 60) min++;
-		else
-		{
-			min = 0;
-			hour++;
-		}
+		//this < b
+		bool result = false;
+		if (this->hour < b.hour) result = true;
+		else if ((this->hour == b.hour) && (this->min < b.min)) result = true;
+		return result;
+	}
+
+	bool operator>=(const milTime& b)
+	{
+		//this >= b
+		bool result = false;
+		if ((this->hour == b.hour) && (this->min == b.min)) result = true;
+		else if (this->hour > b.hour) result = true;
+		else if ((this->hour == b.hour) && (this->min > b.min)) result = true;
+		return result;
+	}
+
+	bool operator==(const milTime& b)
+	{
+		if ((this->hour == b.hour) && (this->min == b.min)) return true;
+		else return false;
 	}
 };
 

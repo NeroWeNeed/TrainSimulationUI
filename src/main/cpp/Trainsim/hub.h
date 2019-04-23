@@ -6,21 +6,37 @@
 
 class hub : public node
 {
+public:
+	struct hubStats
+	{
+		float fuelGiven = 0;
+		int crewGiven = 0;
+	};
+
 private:
 	list<train*> trainsOwned;
 	float fuel;
-
+	vector<hubStats> hub_stats;
 
 public:
+
+
 	hub(string _name, int ID, float _fuel);
 
 	~hub();
 
 	void setOwnership(train* newTrain);
 
-	float giveFuel(float requested);
+	void giveFuel(float requested, train* receiver);
+
+	float getFuelRemaining();
+
+	void recordDispatch();
 
 	void printInfo();
 
+	hubStats getHubStats();
+
+	void newDayHub();
 };
 
