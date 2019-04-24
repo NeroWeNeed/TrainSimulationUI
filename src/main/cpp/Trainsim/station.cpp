@@ -107,3 +107,5 @@ void station::newDayStation()
 	stationStats newstat;
 	station_stats.push_back(newstat);
 }
+
+float station::getTicketPrice() { return ticketPrice; }

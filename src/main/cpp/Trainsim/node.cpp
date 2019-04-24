@@ -218,5 +218,4 @@ void node::newDayNode()
 {
 	nodeStats newstat;
 	stats.push_back(newstat);
-	cout << endl;
 }

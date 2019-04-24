@@ -3,7 +3,7 @@
 #include <time.h>
 
 
-train::train(string _name, int ID, loadType _type, int speed, node* homeHub, int cap, float fuelUse)
+train::train(string _name, int ID, loadType _type, int speed, node* homeHub, int cap, float fuelUse, float price)
 {
 	trainStats first;
 	stats.push_back(first);
@@ -25,6 +25,7 @@ train::train(string _name, int ID, loadType _type, int speed, node* homeHub, int
 	fuel = 100.0;
 	crewtime = 0;
 	loadCarried = NULL;
+	cargoPrice = price;
 }
 
 train::~train()
@@ -348,6 +349,8 @@ void train::pickupLoad(milTime when)
 			int size = loadCarried->getAmount();
 			stats[stats.size() - 1].totalCarried += size;
 			if (size > stats[stats.size() - 1].maxCarried) stats[stats.size() - 1].maxCarried = size;
+
+			stats[stats.size() - 1].loadRevenue += size * cargoPrice;
 		}
 	}
 	else
@@ -378,9 +381,8 @@ void train::dropoffLoad(milTime when)
 	}
 }
 
-void train::transferLoad(milTime when, int minOn, int maxOn, int minOff, int maxOff)
+void train::transferLoad(milTime when, int minOn, int maxOn, int minOff, int maxOff, float price)
 {
-	cout << "INPUTS: " << minOn << " - " << maxOn << ", " << minOff << " - " << maxOff << endl;
 	if (loadCarried == NULL)
 	{
 		cout << name << " attempted to transfer passengers despite not having a load." << endl;
@@ -390,8 +392,6 @@ void train::transferLoad(milTime when, int minOn, int maxOn, int minOff, int max
 		srand(time(NULL));
 		int amountOn = rand() % (maxOn - minOn + 1) + minOn;
 		int amountOff = rand() % (maxOff - minOff + 1) + minOff;
-		cout << "debug: get passengers: " << amountOn << endl;
-		cout << "debug: lse passengers: " << amountOff << endl;
 
 		stats[stats.size() - 1].totalPassengers += amountOn;
 
@@ -399,6 +399,7 @@ void train::transferLoad(milTime when, int minOn, int maxOn, int minOff, int max
 		if (amountOn + loadCarried->getAmount() > capacity) amountOn = capacity - loadCarried->getAmount();
 		loadCarried->addPassengers(amountOn);
 
+		stats[stats.size() - 1].loadRevenue += (amountOn * price);
 		stats[stats.size() - 1].totalCarried += amountOn;
 	}
 	else
@@ -432,7 +433,6 @@ void train::move(int* minutes)
 					train* inspecting = direction->getTrain(i);
 					if (inspecting->getHeading() == location) //If any train on the next track is coming towards us
 					{
-						cout << "NOTICE: " << name << " avoided a collision with " << inspecting->getName() << " on " << direction->getName() << endl << endl;
 						safe = false;
 						stats[stats.size() - 1].collisionsAvoided++;
 					}
@@ -548,9 +548,10 @@ node* train::getNextTrackHeading()
 }
 
 
-void train::setWait(int minutes)
+void train::setWait(int minutes, int weather)
 {
-	waitTime = minutes;
+	waitTime = minutes + weather;
+	stats[stats.size() - 1].waitTimeWeather += weather;
 }
 
 void train::wait(int* minutes)

@@ -48,5 +48,7 @@ public:
 	stationStats getStationStats();
 
 	void newDayStation();
+
+	float getTicketPrice();
 };
 

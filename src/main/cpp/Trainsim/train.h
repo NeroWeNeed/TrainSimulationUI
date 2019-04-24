@@ -19,6 +19,7 @@ public:
 		int upTime = 0;		//Seeking, hauling, homing (moving at all)
 		int downTime = 0;	//maintenance, idle time
 		int waitTime = 0;	//waiting, fuelling
+		int waitTimeWeather = 0; //Amount of waitTime that came from weather (other waittime includes this time)
 
 		int maxCarried = 0;
 		int totalCarried = 0;
@@ -26,6 +27,8 @@ public:
 
 		int totalPassengers = 0;
 		int acceptedPassengers = 0;
+
+		float loadRevenue = 0.0;
 	};
 private:
 	int uniqueID;
@@ -56,11 +59,12 @@ private:
 	load* loadCarried;					//Points to load being hauled
 	load* loadSought;					//Points to load that it will haul (mutually exclusive)
 	int capacity;						//Passenger capacity
+	float cargoPrice;
 
 	bool swapping;						//True if train is WAIT because of a crewswap
 
 public:
-	train(string _name, int ID, loadType _type, int speed, node* homeHub, int cap, float fuelUse);
+	train(string _name, int ID, loadType _type, int speed, node* homeHub, int cap, float fuelUse, float cargoPrice);
 	~train();
 
 	void changeLocation();
@@ -92,11 +96,11 @@ public:
 	void seekLoad(load* newLoad);
 	void pickupLoad(milTime when);
 	void dropoffLoad(milTime when);
-	void transferLoad(milTime when, int minOn, int maxOn, int minOff, int maxOff); //For handling passenger stations beyond the first one
+	void transferLoad(milTime when, int minOn, int maxOn, int minOff, int maxOff, float price); //For handling passenger stations beyond the first one
 	void setState(trainState newState);
 	void setExitState(trainState newExitState);
 	void move(int* minutes);
-	void setWait(int minutes);
+	void setWait(int minutes, int weather = 0);
 	void wait(int* minutes);
 	void refuel(float amount);
 	void addCrewTime(int minutes);

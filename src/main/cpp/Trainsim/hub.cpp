@@ -27,7 +27,7 @@ void hub::printInfo()
 
 	cout << setw(11) << this->getName() << " ID: " << setw(3) << this->getID();
 
-	cout << endl << PIPE_TR << PIPE_HORZ << PIPE_HORZ << PIPE_DLR; //Tab for connections
+	cout << PIPE_TR << PIPE_HORZ << PIPE_HORZ << PIPE_DLR; //Tab for connections
 	printConnections();
 	cout << endl << "   " << PIPE_TR << PIPE_HORZ << PIPE_HORZ << PIPE_HORZ << PIPE_HORZ << PIPE_HORZ;
 	printTrainsHere();

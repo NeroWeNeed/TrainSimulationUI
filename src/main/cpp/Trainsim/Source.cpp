@@ -6,6 +6,7 @@
 #include "train.h"
 #include "track.h"
 #include "hub.h"
+#include "weatherSystem.h"
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -165,15 +166,27 @@ string rule = "=================================================================
 	//Info passed by java frontend
 	struct simulationParameters
 	{
-		float hubFuel; // :^)
-		int tickMinutes;
-		milTime time;
-		int trainSpeed; //Weight units per hour
-		float trainFuelPerWeight; //fuel cost per weight unit
-		int passengerCap; //P train capacity
-		int preemptiveCrewTime; //When refuelling, if the crew is beyond this time (minutes), they will be swapped to avoid swapping later
-		day startDay;
-		int duration; //Days
+		float hubFuel = 10000.00;		// :^) not used anymore but don't delete it because i don't feel like dealing with it
+
+		int tickMinutes = 1;			//Probably leave this at 1
+
+		int trainSpeed;					//Weight units per hour
+		float trainFuelPerWeight;		//fuel cost per weight unit
+		int passengerCap;				//Passenger train capacity
+		int preemptiveCrewTime;			//When refuelling, if the crew is beyond this time (minutes), they will be swapped to avoid swapping later
+		float cargoPrice;				//per-amount price for cargo transport. Revenue for us
+		float fuelCost;					//Cost of 1.00% of a fuel tank
+
+		int loadDispatchTime;	//Dispatch a train when a load has (this) much time left before pickup time (Do not set low or you'll always be late)
+
+		day startDay;			//Monday, tuesday...
+		milTime startTime;		//Hour,Min
+		int duration;			//Days
+
+		bool weatherToggle;		// :^)
+		int weatherType;		// 0 is least bad, 3 is snow
+		int weatherSeverity;	//0 to 100 i think
+		int maxWeatherDelay;	//Natural maximum is 100 on worst settings
 	};
 
 	struct nodeDetails
@@ -397,7 +410,7 @@ string rule = "=================================================================
 
 			if (input[i].type == "p" || input[i].type == "P") type = PASSENGER;
 
-			trains.push_back(new train(input[i].name, currentTrainID, type, param.trainSpeed, home, param.passengerCap, param.trainFuelPerWeight));
+			trains.push_back(new train(input[i].name, currentTrainID, type, param.trainSpeed, home, param.passengerCap, param.trainFuelPerWeight, param.cargoPrice));
 			currentTrainID++;
 		}
 	}
@@ -544,7 +557,6 @@ string rule = "=================================================================
 					if (simStartDay == SUN || simStartDay == SAT) whichDays.push_back(false);
 					else whichDays.push_back(true);
 					nextDay(simStartDay);
-					cout << "DEBUG: " << simStartDay << endl;
 				}
 			}
 
@@ -567,7 +579,7 @@ string rule = "=================================================================
 			int whatDay = 1;
 			for (int w = 0; w < param.duration; w++)
 			{
-				if (whichDays[w] == true)
+				if (whichDays[w % 7] == true)
 				{
 					loads.push_back(new load("Freight " + to_string(currentFreightID), currentFreightID, amount, spawn, dest, start, whatDay));
 				}
@@ -595,7 +607,6 @@ string rule = "=================================================================
 					if (simStartDay == SUN || simStartDay == SAT) whichDays.push_back(false);
 					else whichDays.push_back(true);
 					nextDay(simStartDay);
-					cout << "DEBUG: " << simStartDay << endl;
 				}
 			}
 
@@ -619,7 +630,7 @@ string rule = "=================================================================
 			int whatDay = 1;
 			for (int w = 0; w < param.duration; w++)
 			{
-				if (whichDays[w & 7] == true) 	loads.push_back(new load("Passenger " + to_string(currentPassID), currentPassID, stationList, timesList, whatDay));
+				if (whichDays[w % 7] == true) 	loads.push_back(new load("Passenger " + to_string(currentPassID), currentPassID, stationList, timesList, whatDay));
 				whatDay++;
 			}
 			currentPassID++;
@@ -693,7 +704,7 @@ string rule = "=================================================================
 		//TODO: do statistics stuff here
 	}
 
-	void SEEKtrainProc(train* theTrain, int* timeAllowance, simulationParameters param)
+	void SEEKtrainProc(train* theTrain, int* timeAllowance, simulationParameters param, int weather)
 	{
 		if (theTrain->getState() != SEEK)
 		{
@@ -711,7 +722,7 @@ string rule = "=================================================================
 		{
 			//If crew time is getting high, stop to swap
 			theTrain->setState(WAIT);
-			theTrain->setWait(60);
+			theTrain->setWait(60, weather);
 			theTrain->setExitState(SEEK);
 			theTrain->setSwapFlag();
 			hub* home = static_cast<hub*>(theTrain->getHome());
@@ -748,7 +759,7 @@ string rule = "=================================================================
 			else //If we got here early
 			{
 				int extraWait = minutesUntil(realTime, theTrain->getLoadSought()->getBegin());
-				theTrain->setWait(60 + extraWait);
+				theTrain->setWait(60 + extraWait, weather);
 			}
 			theTrain->setState(WAIT);
 			theTrain->setExitState(HAUL);
@@ -756,8 +767,9 @@ string rule = "=================================================================
 
 			int minOn = 0, maxOn = 0, minOff = 0, maxOff = 0;
 			st->getBoardingInfoRef(&minOn, &maxOn, &minOff, &maxOff);
+			float price = st->getTicketPrice();
 
-			theTrain->transferLoad(realTime, minOn, maxOn, 0, 0);
+			theTrain->transferLoad(realTime, minOn, maxOn, 0, 0, price);
 
 			if (*timeAllowance > 0) theTrain->wait(timeAllowance); //If we have any time left over, put it into waiting
 			return;
@@ -765,7 +777,7 @@ string rule = "=================================================================
 
 	}
 
-	void HAULtrainProc(train* theTrain, int* timeAllowance, simulationParameters param)
+	void HAULtrainProc(train* theTrain, int* timeAllowance, simulationParameters param, int weather)
 	{
 		if (theTrain->getState() != HAUL)
 		{
@@ -783,7 +795,7 @@ string rule = "=================================================================
 		{
 			//If crew time is getting high, stop to swap
 			theTrain->setState(WAIT);
-			theTrain->setWait(60);
+			theTrain->setWait(60, weather);
 			theTrain->setExitState(HAUL);
 			theTrain->setSwapFlag();
 			hub* home = static_cast<hub*>(theTrain->getHome());
@@ -829,8 +841,10 @@ string rule = "=================================================================
 			{
 				int minOn = 0, maxOn = 0, minOff = 0, maxOff = 0;
 				st->getBoardingInfoRef(&minOn, &maxOn, &minOff, &maxOff);
+				float price = st->getTicketPrice();
 
-				theTrain->transferLoad(realTime, minOn, maxOn, minOff, maxOff);
+
+				theTrain->transferLoad(realTime, minOn, maxOn, minOff, maxOff, price);
 				st->recordPickup();
 
 				theTrain->deleteRoute();
@@ -838,7 +852,7 @@ string rule = "=================================================================
 				theTrain->setExitState(HAUL);
 			}
 			theTrain->setState(WAIT);
-			theTrain->setWait(60); //hour long processing time
+			theTrain->setWait(60, weather); //hour long processing time
 
 			return;
 		}
@@ -898,7 +912,6 @@ string rule = "=================================================================
 				for (int i = 0; i < numHubs; i++)
 				{
 					hub* inspectHub = static_cast<hub*>(location->getNthClosestHub(i));
-					cout << "desired: " << fuelDesired << "  " << inspectHub->getName() << ": " << inspectHub->getFuelRemaining() << endl;
 					if (inspectHub->getFuelRemaining() >= fuelDesired) 
 					{
 						bestHub = static_cast<node*>(inspectHub);
@@ -1037,7 +1050,7 @@ string rule = "=================================================================
 		return false;
 	}
 
-	void assignLoads(simulationParameters param, milTime time, int numHubs)
+	void assignLoads(simulationParameters param, milTime time, int numHubs, int dispatchTime)
 	{
 		bool passengerTrainsAvailable = true;
 		bool freightTrainsAvailable = true;
@@ -1057,8 +1070,8 @@ string rule = "=================================================================
 				continue;
 			}
 
-			if ( ((minutesUntil(loadTime, realTime) >= -60) && (loads[soonest]->getDay() == simDay)) ||
-				((1440 + minutesUntil(loadTime, realTime) <= 60) && (loads[soonest]->getDay() == simDay + 1)) )//If a load is ready, assign it
+			if ( ((minutesUntil(loadTime, realTime) >= -(dispatchTime)) && (loads[soonest]->getDay() == simDay)) ||
+				((1440 + minutesUntil(loadTime, realTime) <= dispatchTime) && (loads[soonest]->getDay() == simDay + 1)) )//If a load is ready, assign it
 			{
 				
 				train* candidateTrain = NULL;
@@ -1117,7 +1130,7 @@ string rule = "=================================================================
 	}
 
 	//Called once per tick to handle trains
-	void trainProcessing(train* theTrain, int* allowance, simulationParameters param)
+	void trainProcessing(train* theTrain, int* allowance, simulationParameters param, int weatherDelay)
 	{
 		trainState state = theTrain->getState();
 		switch (state)
@@ -1127,11 +1140,11 @@ string rule = "=================================================================
 			break;
 
 		case SEEK:
-			SEEKtrainProc(theTrain, allowance, param);
+			SEEKtrainProc(theTrain, allowance, param, weatherDelay);
 			break;
 
 		case HAUL:
-			HAULtrainProc(theTrain, allowance, param);
+			HAULtrainProc(theTrain, allowance, param, weatherDelay);
 			break;
 
 		case WAIT:
@@ -1152,8 +1165,15 @@ string rule = "=================================================================
 		}
 	}
 
-	void processAllTrains(simulationParameters param)
+	void processAllTrains(simulationParameters param, weatherSystem weather)
 	{
+		int weatherDelay = 0;
+
+		if (param.weatherToggle)
+		{
+			weatherDelay = weather.isWeatherGood(param.maxWeatherDelay);
+		}
+
 		//Passenger trains first
 		for (int i = 0; i < trains.size(); i++)
 		{
@@ -1161,7 +1181,7 @@ string rule = "=================================================================
 			{
 				int allowance = param.tickMinutes;
 				if ((trains[i]->getState() != IDLE) && (trains[i]->getState() != MAIN)) trains[i]->addCrewTime(param.tickMinutes);
-				trainProcessing(trains[i], &allowance, param);
+				trainProcessing(trains[i], &allowance, param, weatherDelay);
 				trains[i]->lockCrewTime(); //If crew time is locked, process that
 			}
 		}
@@ -1172,7 +1192,7 @@ string rule = "=================================================================
 			{
 				int allowance = param.tickMinutes;
 				if ((trains[i]->getState() != IDLE) && (trains[i]->getState() != MAIN)) trains[i]->addCrewTime(param.tickMinutes);
-				trainProcessing(trains[i], &allowance, param);
+				trainProcessing(trains[i], &allowance, param, weatherDelay);
 				trains[i]->lockCrewTime(); //If crew time is locked, process that
 			}
 		}
@@ -1322,11 +1342,21 @@ int main()
 	parameters.hubFuel = 12000.0;
 	parameters.trainSpeed = 175;
 	parameters.tickMinutes = 1;
-	parameters.preemptiveCrewTime = 480;
+	parameters.preemptiveCrewTime = 480;  // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
 	parameters.trainFuelPerWeight = 0.05;
 	parameters.startDay = MON;
 	parameters.duration = 20;
 	parameters.passengerCap = 200;
+	parameters.loadDispatchTime = 60;
+	parameters.weatherToggle = true;
+	parameters.weatherSeverity = 50;
+	parameters.weatherType = 3;
+	parameters.maxWeatherDelay = 90;
+	parameters.cargoPrice = 5;
+	parameters.fuelCost = 1.5;
+
+	weatherSystem weather(parameters.weatherType, parameters.weatherSeverity);
+
 
 
 	vector<nodeDetails> initNodes;
@@ -1337,7 +1367,7 @@ int main()
 	initNodes.push_back({ false,  "STATION4", "F", "0", "0", "0", "0", "0", "0" });
 	initNodes.push_back({ false,  "STATION5", "P", "0", "10", "70", "50", "120", "20.00" });
 	initNodes.push_back({ false,  "STATION6", "F", "0", "0", "0", "0", "0", "0" });
-	initNodes.push_back({ false,  "STATION7", "F", "0", "0", "0", "0", "0", "0" });
+	initNodes.push_back({ false,  "STATION7", "F", "0", "0", "0", "0", "0", "0" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
 	initNodes.push_back({ false,  "STATION8", "F", "0", "0", "0", "0", "0", "0" });
 	initNodes.push_back({ false,  "STATION9", "P", "0", "50", "150", "50", "100", "5.00" });
 	initNodes.push_back({ false, "STATION10", "P", "0", "40", "90", "70", "160", "15.00" });
@@ -1355,7 +1385,7 @@ int main()
 	initTrack.push_back({  "STATION7",  "STATION8",  "7", "00 00", "00 00" });
 	initTrack.push_back({  "STATION8",  "STATION5",  "2", "00 00", "00 00" });
 	initTrack.push_back({  "STATION8",      "HUB1", "12", "00 00", "00 00" });
-	initTrack.push_back({  "STATION8", "STATION10", "15", "00 00", "00 00" });
+	initTrack.push_back({  "STATION8", "STATION10", "15", "00 00", "00 00" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
 	initTrack.push_back({ "STATION10",  "STATION9",  "8", "00 00", "00 00" });
 	initTrack.push_back({ "STATION10", "STATION11",  "7", "00 00", "00 00" });
 	initTrack.push_back({ "STATION11", "STATION12", "18", "00 00", "00 00" });
@@ -1366,40 +1396,40 @@ int main()
 	vector<trainDetails> initTrain;
 	initTrain.push_back({ "LOCOMOTIVE1", "HUB1", "P" });
 //	initTrain.push_back({ "LOCOMOTIVE2", "HUB1", "F" });
-//	initTrain.push_back({ "LOCOMOTIVE3", "HUB2", "F" });
+//	initTrain.push_back({ "LOCOMOTIVE3", "HUB2", "F" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
 //	initTrain.push_back({ "LOCOMOTIVE4", "HUB2", "F" });
 
 	vector<freightDetails> initFreights;
 //	initFreights.push_back({  "STATION7", "STATION12", "F", "04 00", "100" });
 //	initFreights.push_back({  "STATION7",  "STATION4", "F", "04 01",  "50" });
 //	initFreights.push_back({  "STATION1",  "STATION2", "F", "04 50",  "50" });
-//	initFreights.push_back({  "STATION6",  "STATION1", "F", "04 55",  "50" });
+//	initFreights.push_back({  "STATION6",  "STATION1", "F", "04 55",  "50" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
 //	initFreights.push_back({  "STATION4",  "STATION7", "F", "05 10", "100" });
 //	initFreights.push_back({  "STATION4",  "STATION1", "F", "15 10",  "50" });
 //	initFreights.push_back({  "STATION2",  "STATION4", "F", "15 10",  "50" });
 
 	vector<routeDetails> initPRoutesOne;
 	initPRoutesOne.push_back({  "STATION5", "02 00" });
-	initPRoutesOne.push_back({  "STATION3", "03 00" });
+	initPRoutesOne.push_back({  "STATION3", "03 00" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
 	initPRoutesOne.push_back({ "STATION11", "04 00" });
 	initPRoutesOne.push_back({  "STATION3", "05 00" });
 
 	vector<routeDetails> initPRoutesTwo;
 	initPRoutesTwo.push_back({ "STATION10", "02 00" });
-	initPRoutesTwo.push_back({ "STATION11", "02 50" });
+	initPRoutesTwo.push_back({ "STATION11", "02 50" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
 	initPRoutesTwo.push_back({ "STATION10", "03 40" });
 	initPRoutesTwo.push_back({ "STATION11", "04 30" });
 	
 	vector<passengerDetails> initPassengers;
-	initPassengers.push_back({ "F", initPRoutesOne });
+	initPassengers.push_back({ "W", initPRoutesOne }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
 //	initPassengers.push_back({ "F", initPRoutesTwo });
 
 	vector<edgeMaintenanceDetails> initEMaint;
-	initEMaint.push_back({ "1", "STATION5", "STATION4", "3" });
+	initEMaint.push_back({ "1", "STATION5", "STATION4", "3" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
 	initEMaint.push_back({ "1", "STATION3", "STATION4", "3" });
 
 	vector<trainMaintenanceDetails> initTMaint;
-//	initTMaint.push_back({ "1", "LOCOMOTIVE2", "3" });
+//	initTMaint.push_back({ "1", "LOCOMOTIVE2", "3" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
 
 
 	///////////////////////////////////////////////////////////////////////////
@@ -1457,8 +1487,8 @@ int main()
 
 		
 		perTickProcessing();
-		assignLoads(parameters, realTime, numberOfHubs);
-		processAllTrains(parameters);
+		assignLoads(parameters, realTime, numberOfHubs, parameters.loadDispatchTime);
+		processAllTrains(parameters, weather);
 
 
 		COLLISION = collisionDetection();
@@ -1474,7 +1504,7 @@ int main()
 
 		//printTime(realTime);
 		//printAllTrains();
-		//printAllLoads();
+		//printAllLoads();			//Uncomment these for a more detailed and wildly fucking slow simulation. Remember, system() is the devil
 		//system("pause");
 		//system("cls");
 
@@ -1485,6 +1515,10 @@ int main()
 	}
 	/////////////////////////////////////////////////////////////////////////
 	//STATS PROCESSING
+	cout << "SIMULATION COMPLETE" << endl;
+	cout << rule << endl;
+	cout << endl << "Processing statistics gathered..." << endl;
+
 	for (int i = 0; i < completeLoads.size(); i++)
 	{
 		milTime realStart = completeLoads[i]->getPickupTime();
@@ -1510,6 +1544,10 @@ int main()
 			train::trainStats stat = trains[t]->getTrainStats();
 
 			statsFile << stat.distance << "," << stat.collisionsAvoided << "," << stat.totalCarried << endl;
+
+			float profit = 0.0;
+			profit = stat.loadRevenue - (stat.fuelUsed * parameters.fuelCost);
+			cout << "$" << setprecision(2) << fixed << profit << endl;
 		}
 
 		for (int s = 0; s < nodes.size(); s++)
