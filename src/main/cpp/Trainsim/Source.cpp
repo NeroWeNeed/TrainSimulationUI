@@ -11,7 +11,12 @@
 #include <sstream>
 #include <fstream>
 
-ofstream statsFile("stats.csv");
+#define LOAD_PROCESS_TIME 60
+#define CREW_PROCESS_TIME 60
+#define REFUEL_TIME 60
+
+ofstream maxxFile("stats.csv");
+ofstream neroFile("output.txt");
 
 using namespace std;
 
@@ -177,7 +182,7 @@ string rule = "=================================================================
 		float cargoPrice;				//per-amount price for cargo transport. Revenue for us
 		float fuelCost;					//Cost of 1.00% of a fuel tank
 
-		int loadDispatchTime;	//Dispatch a train when a load has (this) much time left before pickup time (Do not set low or you'll always be late)
+		int preemptiveLoadDispatchTime;	//Dispatch a train when a load has (this) much time left before pickup time (Do not set low or you'll always be late)
 
 		day startDay;			//Monday, tuesday...
 		milTime startTime;		//Hour,Min
@@ -255,6 +260,7 @@ string rule = "=================================================================
 		string name;
 		string daysDown;
 	}; 
+
 
 	struct maintenanceRecTrain 
 	{
@@ -360,12 +366,14 @@ string rule = "=================================================================
 			if (connectionA == NULL)
 			{
 				cout << "buildTracks could not find node " << input[i].node1 << endl;
+				err.highError = true;
 				return;
 			}
 
 			if (connectionB == NULL)
 			{
 				cout << "buildTracks could not find node " << input[i].node2 << endl;
+				err.highError = true;
 				return;
 			}
 
@@ -405,6 +413,7 @@ string rule = "=================================================================
 			if (home == NULL)
 			{
 				cout << "buildTrains could not find node " << input[i].homeHub << endl;
+				err.highError = true;
 				return;
 			}
 
@@ -456,6 +465,27 @@ string rule = "=================================================================
 		return numHubs;
 	}
 
+	//Figures out the largest distance between a station and a hub that exists, converts it to a padded value of minutes
+	//This value will be used to determine when trains must return home for the night
+	int calculateWorstCaseHomeTime(int numHubs, simulationParameters param)
+	{
+		int worst = 0;
+
+		for (int n = 0; n < nodes.size(); n++)
+		{
+			if (nodes[n]->getNodeType() == STATION)
+			{
+				station* st = static_cast<station*>(nodes[n]);
+				
+				if (worst < st->getFarthestHubDistance()) worst = st->getFarthestHubDistance();
+			}
+		}
+
+		int worstTravelTimeMinutes = worst / param.trainSpeed;
+		worstTravelTimeMinutes += LOAD_PROCESS_TIME + 15; //Pad time
+		return worstTravelTimeMinutes;
+	}
+
 	//Creates a record for handling maintenance
 	void buildMaintenanceRecords(vector<edgeMaintenanceDetails> inTracks, vector<trainMaintenanceDetails> inTrains)
 	{
@@ -478,6 +508,7 @@ string rule = "=================================================================
 			if (affected == NULL)
 			{
 				cout << "buildMaintenanceRecords could not find the train matching name: " << inTrains[i].name << endl;
+				err.highError = true;
 				return;
 			}
 
@@ -567,12 +598,14 @@ string rule = "=================================================================
 			if (spawn == NULL)
 			{
 				cout << "buildLoads could not find station named " << inFreight[i].station1 << endl;
+				err.highError = true;
 				return;
 			}
 
 			if (dest == NULL)
 			{
 				cout << "buildLoads could not find station named " << inFreight[i].station2 << endl;
+				err.highError = true;
 				return;
 			}
 
@@ -581,7 +614,8 @@ string rule = "=================================================================
 			{
 				if (whichDays[w % 7] == true)
 				{
-					loads.push_back(new load("Freight " + to_string(currentFreightID), currentFreightID, amount, spawn, dest, start, whatDay));
+					string name = "Freight#" + to_string(currentFreightID) + "_day" + to_string(whatDay);
+					loads.push_back(new load(name, currentFreightID, amount, spawn, dest, start, whatDay));
 				}
 				whatDay++;
 			}
@@ -621,6 +655,7 @@ string rule = "=================================================================
 				if (currentStation == NULL)
 				{
 					cout << "buildLoads could not find station named " << inPass[i].stations[j].station << endl;
+					err.highError = true;
 					return;
 				}
 
@@ -630,7 +665,11 @@ string rule = "=================================================================
 			int whatDay = 1;
 			for (int w = 0; w < param.duration; w++)
 			{
-				if (whichDays[w % 7] == true) 	loads.push_back(new load("Passenger " + to_string(currentPassID), currentPassID, stationList, timesList, whatDay));
+				if (whichDays[w % 7] == true)
+				{
+					string name = "Passenger#" + to_string(currentPassID) + "_day" + to_string(whatDay);
+					loads.push_back(new load(name, currentPassID, stationList, timesList, whatDay));
+				}
 				whatDay++;
 			}
 			currentPassID++;
@@ -722,7 +761,7 @@ string rule = "=================================================================
 		{
 			//If crew time is getting high, stop to swap
 			theTrain->setState(WAIT);
-			theTrain->setWait(60, weather);
+			theTrain->setWait(CREW_PROCESS_TIME, weather);
 			theTrain->setExitState(SEEK);
 			theTrain->setSwapFlag();
 			hub* home = static_cast<hub*>(theTrain->getHome());
@@ -754,22 +793,26 @@ string rule = "=================================================================
 
 			if (realTime >= theTrain->getLoadSought()->getBegin())
 			{
-				theTrain->setWait(60); //hour long processing time
+				theTrain->setWait(LOAD_PROCESS_TIME); //hour long processing time
 			}
 			else //If we got here early
 			{
 				int extraWait = minutesUntil(realTime, theTrain->getLoadSought()->getBegin());
-				theTrain->setWait(60 + extraWait, weather);
+				theTrain->setWait(LOAD_PROCESS_TIME + extraWait, weather);
 			}
 			theTrain->setState(WAIT);
 			theTrain->setExitState(HAUL);
 			theTrain->pickupLoad(realTime);
 
-			int minOn = 0, maxOn = 0, minOff = 0, maxOff = 0;
-			st->getBoardingInfoRef(&minOn, &maxOn, &minOff, &maxOff);
-			float price = st->getTicketPrice();
+			if (theTrain->getType() == PASSENGER)
+			{
+				int minOn = 0, maxOn = 0, minOff = 0, maxOff = 0;
+				st->getBoardingInfoRef(&minOn, &maxOn, &minOff, &maxOff);
+				float price = st->getTicketPrice();
 
-			theTrain->transferLoad(realTime, minOn, maxOn, 0, 0, price);
+				theTrain->transferLoad(realTime, minOn, maxOn, 0, 0, price);
+			}
+
 
 			if (*timeAllowance > 0) theTrain->wait(timeAllowance); //If we have any time left over, put it into waiting
 			return;
@@ -795,7 +838,7 @@ string rule = "=================================================================
 		{
 			//If crew time is getting high, stop to swap
 			theTrain->setState(WAIT);
-			theTrain->setWait(60, weather);
+			theTrain->setWait(CREW_PROCESS_TIME, weather);
 			theTrain->setExitState(HAUL);
 			theTrain->setSwapFlag();
 			hub* home = static_cast<hub*>(theTrain->getHome());
@@ -852,7 +895,7 @@ string rule = "=================================================================
 				theTrain->setExitState(HAUL);
 			}
 			theTrain->setState(WAIT);
-			theTrain->setWait(60, weather); //hour long processing time
+			theTrain->setWait(LOAD_PROCESS_TIME, weather); //hour long processing time
 
 			return;
 		}
@@ -883,7 +926,7 @@ string rule = "=================================================================
 		{
 			//If crew time is getting high, stop to swap
 			theTrain->setState(WAIT);
-			theTrain->setWait(60);
+			theTrain->setWait(CREW_PROCESS_TIME);
 			theTrain->setExitState(FUEL);
 			theTrain->setSwapFlag();
 			hub* home = static_cast<hub*>(theTrain->getHome());
@@ -942,7 +985,7 @@ string rule = "=================================================================
 			locHub->giveFuel(fuelNeeded, theTrain);
 
 			theTrain->setState(WAIT);
-			theTrain->setWait(60);
+			theTrain->setWait(REFUEL_TIME);
 
 			if (theTrain->getCrewTime() >= param.preemptiveCrewTime)
 			{
@@ -980,7 +1023,7 @@ string rule = "=================================================================
 		{
 			//If crew time is getting high, stop to swap
 			theTrain->setState(WAIT);
-			theTrain->setWait(60);
+			theTrain->setWait(CREW_PROCESS_TIME);
 			theTrain->setExitState(HOME);
 			theTrain->setSwapFlag();
 			hub* home = static_cast<hub*>(theTrain->getHome());
@@ -1165,13 +1208,26 @@ string rule = "=================================================================
 		}
 	}
 
-	void processAllTrains(simulationParameters param, weatherSystem weather)
+	void processAllTrains(simulationParameters param, weatherSystem weather, int dayEndMinutes)
 	{
 		int weatherDelay = 0;
 
 		if (param.weatherToggle)
 		{
 			weatherDelay = weather.isWeatherGood(param.maxWeatherDelay);
+		}
+
+		if (minutesUntil(realTime, { 23,59 }) <= dayEndMinutes)
+		{
+			for (int i = 0; i < trains.size(); i++)
+			{
+				if (trains[i]->getState() != HOME && trains[i]->getState() != IDLE && trains[i]->getState() != MAIN && trains[i]->getState() != WAIT)
+				{
+					trains[i]->setExitState(trains[i]->getState());
+					trains[i]->setState(HOME);
+				}
+			}
+			int x = 0; //This line is here for me to breakpoint to. ignore it
 		}
 
 		//Passenger trains first
@@ -1223,6 +1279,9 @@ string rule = "=================================================================
 		for (int i = 0; i < trains.size(); i++)
 		{
 			if (trains[i]->getState() == MAIN) trains[i]->setState(IDLE);
+			float refuel = 100.0 - trains[i]->getFuel();
+			trains[i]->refuel(refuel);
+			trains[i]->newCrew();
 		}
 	}
 
@@ -1234,6 +1293,15 @@ string rule = "=================================================================
 			if (simDay == trackMaintenance[i].day)
 			{
 				trackMaintenance[i].affected->setClosed();
+			}
+		}
+
+		for (int i = 0; i < trains.size(); i++)
+		{
+			if (trains[i]->getLoadCarried() != NULL || trains[i]->getLoadSought() != NULL)
+			{
+				//if we held a load overnight, get ready to deliver it in the morning
+				trains[i]->setState(trains[i]->getExitState());
 			}
 		}
 
@@ -1347,13 +1415,14 @@ int main()
 	parameters.startDay = MON;
 	parameters.duration = 20;
 	parameters.passengerCap = 200;
-	parameters.loadDispatchTime = 60;
+	parameters.preemptiveLoadDispatchTime = 60;
 	parameters.weatherToggle = true;
 	parameters.weatherSeverity = 50;
 	parameters.weatherType = 3;
 	parameters.maxWeatherDelay = 90;
 	parameters.cargoPrice = 5;
 	parameters.fuelCost = 1.5;
+	int dayEndTimer = 0;
 
 	weatherSystem weather(parameters.weatherType, parameters.weatherSeverity);
 
@@ -1395,18 +1464,18 @@ int main()
 
 	vector<trainDetails> initTrain;
 	initTrain.push_back({ "LOCOMOTIVE1", "HUB1", "P" });
-//	initTrain.push_back({ "LOCOMOTIVE2", "HUB1", "F" });
-//	initTrain.push_back({ "LOCOMOTIVE3", "HUB2", "F" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
-//	initTrain.push_back({ "LOCOMOTIVE4", "HUB2", "F" });
+	initTrain.push_back({ "LOCOMOTIVE2", "HUB1", "F" });
+	initTrain.push_back({ "LOCOMOTIVE3", "HUB2", "F" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
+	initTrain.push_back({ "LOCOMOTIVE4", "HUB2", "F" });
 
 	vector<freightDetails> initFreights;
-//	initFreights.push_back({  "STATION7", "STATION12", "F", "04 00", "100" });
-//	initFreights.push_back({  "STATION7",  "STATION4", "F", "04 01",  "50" });
-//	initFreights.push_back({  "STATION1",  "STATION2", "F", "04 50",  "50" });
-//	initFreights.push_back({  "STATION6",  "STATION1", "F", "04 55",  "50" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
-//	initFreights.push_back({  "STATION4",  "STATION7", "F", "05 10", "100" });
-//	initFreights.push_back({  "STATION4",  "STATION1", "F", "15 10",  "50" });
-//	initFreights.push_back({  "STATION2",  "STATION4", "F", "15 10",  "50" });
+	initFreights.push_back({  "STATION7", "STATION12", "F", "04 00", "100" });
+	initFreights.push_back({  "STATION7",  "STATION4", "F", "04 01",  "50" });
+	initFreights.push_back({  "STATION1",  "STATION2", "F", "04 50",  "50" });
+	initFreights.push_back({  "STATION6",  "STATION1", "F", "04 55",  "50" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
+	initFreights.push_back({  "STATION4",  "STATION7", "F", "05 10", "100" });
+	initFreights.push_back({  "STATION4",  "STATION1", "F", "15 10",  "50" });
+	initFreights.push_back({  "STATION2",  "STATION4", "F", "15 10",  "50" });
 
 	vector<routeDetails> initPRoutesOne;
 	initPRoutesOne.push_back({  "STATION5", "02 00" });
@@ -1422,14 +1491,14 @@ int main()
 	
 	vector<passengerDetails> initPassengers;
 	initPassengers.push_back({ "W", initPRoutesOne }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
-//	initPassengers.push_back({ "F", initPRoutesTwo });
+	initPassengers.push_back({ "F", initPRoutesTwo });
 
 	vector<edgeMaintenanceDetails> initEMaint;
 	initEMaint.push_back({ "1", "STATION5", "STATION4", "3" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
 	initEMaint.push_back({ "1", "STATION3", "STATION4", "3" });
 
 	vector<trainMaintenanceDetails> initTMaint;
-//	initTMaint.push_back({ "1", "LOCOMOTIVE2", "3" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
+	initTMaint.push_back({ "1", "LOCOMOTIVE2", "3" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
 
 
 	///////////////////////////////////////////////////////////////////////////
@@ -1456,6 +1525,9 @@ int main()
 
 	cout << rule << "Pre-calculating hub-station minimum distances..." << endl;
 	numberOfHubs = calculateHubDistances();
+
+	cout << rule << "Pre-calculating hub-station minimum distances..." << endl;
+	dayEndTimer = calculateWorstCaseHomeTime(numberOfHubs, parameters);
 
 	cout << rule << "Setting maintenance times..." << endl;
 	buildMaintenanceRecords(initEMaint, initTMaint);
@@ -1487,8 +1559,8 @@ int main()
 
 		
 		perTickProcessing();
-		assignLoads(parameters, realTime, numberOfHubs, parameters.loadDispatchTime);
-		processAllTrains(parameters, weather);
+		assignLoads(parameters, realTime, numberOfHubs, parameters.preemptiveLoadDispatchTime);
+		processAllTrains(parameters, weather, dayEndTimer);
 
 
 		COLLISION = collisionDetection();
@@ -1501,16 +1573,24 @@ int main()
 		previousDay = simDay;
 		runClock(parameters.tickMinutes);
 		
-
-		//printTime(realTime);
-		//printAllTrains();
-		//printAllLoads();			//Uncomment these for a more detailed and wildly fucking slow simulation. Remember, system() is the devil
-		//system("pause");
-		//system("cls");
+		if (minutesUntil(realTime, { 23,59 }) < dayEndTimer + 30)
+		{
+			if (minutesUntil(realTime, { 23,59 }) == dayEndTimer)
+			{
+				cout << "DAY END CALLED. ALL TRAINS RETURN TO HUB. " << endl;
+			}
+			//printDay();
+			//printTime(realTime);
+			//printAllTrains();
+			//printAllLoads();			//Uncomment these for a more detailed and wildly fucking slow simulation. Remember, system() is the devil
+			//system("pause");
+			//system("cls");
+		}
 
 		if (simDay != previousDay)
 		{
 			endOfDayProcessing();
+			//printAllTrains();
 		}
 	}
 	/////////////////////////////////////////////////////////////////////////
@@ -1533,53 +1613,118 @@ int main()
 	//STATS PRINTING
 	for (int i = 0; i < parameters.duration; i++)
 	{
-		statsFile << "Day," << parameters.duration - i << endl;
+		maxxFile << "Day," << parameters.duration - i << endl;
+		neroFile << "DAY" << parameters.duration - i << endl;
 
+
+		string TRAIN_P = " "; //for output file, since this loop was originally designed around the stats file and the two must now coincide
+		string TRAIN_F = " ";
 		for (int t = 0; t < trains.size(); t++)
 		{
-			statsFile << trains[t]->getName() << ",";
-			if (trains[t]->getType() == FREIGHT) statsFile << "Freight,";
-			else statsFile << "Passenger,";
+			maxxFile << trains[t]->getName() << ",";
+			if (trains[t]->getType() == FREIGHT) maxxFile << "Freight,";
+			else maxxFile << "Passenger,";
 
 			train::trainStats stat = trains[t]->getTrainStats();
 
-			statsFile << stat.distance << "," << stat.collisionsAvoided << "," << stat.totalCarried << endl;
+			maxxFile << stat.distance << "," << stat.collisionsAvoided << "," << stat.totalCarried << endl;
 
 			float profit = 0.0;
 			profit = stat.loadRevenue - (stat.fuelUsed * parameters.fuelCost);
-			cout << "$" << setprecision(2) << fixed << profit << endl;
+
+			if (trains[t]->getType() == PASSENGER)
+			{
+				TRAIN_P += "\nTRAIN_P";
+				TRAIN_P += " " + trains[t]->getName() + " " + to_string(stat.distance) + " " + to_string(stat.collisionsAvoided) + " " + to_string(profit);
+				TRAIN_P += " " + to_string(stat.timesFuelled) + " " + to_string(stat.fuelUsed) + " " + to_string(stat.totalPassengers) + " " + to_string(stat.acceptedPassengers);
+			}
+			else
+			{
+				TRAIN_F += "\nTRAIN_F";
+				TRAIN_F += " " + trains[t]->getName() + " " + to_string(stat.distance) + " " + to_string(stat.collisionsAvoided) + " " + to_string(profit);
+				TRAIN_F += " " + to_string(stat.timesFuelled) + " " + to_string(stat.fuelUsed) + " " + to_string(stat.totalCarried) + " " + to_string(stat.maxCarried);
+			}
 		}
+
+
+		neroFile << TRAIN_P;
+		neroFile << TRAIN_F << endl;
 
 		for (int s = 0; s < nodes.size(); s++)
 		{
 			if (nodes[s]->getNodeType() == STATION)
 			{
-				statsFile << nodes[s]->getName() << ",";
+				maxxFile << nodes[s]->getName() << ",";
 
 				node::nodeStats n_stat = nodes[s]->getNodeStats();
 				station::stationStats s_stat = static_cast<station*>(nodes[s])->getStationStats();
 
-				statsFile << n_stat.trainStops << "," << s_stat.dropoffs << "," << s_stat.pickups << "," << n_stat.trainsThru << endl;
+				maxxFile << n_stat.trainStops << "," << s_stat.dropoffs << "," << s_stat.pickups << "," << n_stat.trainsThru << endl;
+
+				neroFile << "STATION";
+				neroFile << " " << nodes[s]->getName() << " " << s_stat.dropoffs << " " << s_stat.pickups << " " << n_stat.trainStops << " " << n_stat.trainsThru << endl;
 			}
 		}
 
 		for (int r = 0; r < tracks.size(); r++)
 		{
-			statsFile << tracks[r]->getName() << "," << tracks[r]->getNodeStats().trainsThru << endl;
+			node::nodeStats t_stat = tracks[r]->getNodeStats();
+			maxxFile << tracks[r]->getName() << "," << t_stat.trainsThru << endl;
+
+			neroFile << "TRACK";
+			neroFile << " " << tracks[r]->getName() << " " << t_stat.trainsThru << endl;
 		}
+
 
 		for (int h = 0; h < nodes.size(); h++)
 		{
 			if (nodes[h]->getNodeType() == HUB)
 			{
-				statsFile << nodes[h]->getName() << "," << nodes[h]->getNodeStats().trainsThru << endl;
+				node::nodeStats n_stats = nodes[h]->getNodeStats();
+				hub::hubStats h_stats = static_cast<hub*>(nodes[h])->getHubStats();
+
+				maxxFile << nodes[h]->getName() << "," << n_stats.trainsThru << endl;
+				neroFile << "HUB";
+				neroFile << " " << nodes[h]->getName() << " " << h_stats.fuelGiven << " " << h_stats.crewGiven << endl;
 			}
 		}
 
-		statsFile << endl;
+
+		maxxFile << endl;
+		neroFile << endl << endl;
 	}
 
-	statsFile.flush();
+	for (int o = 0; o < loads.size(); o++)
+	{
+		load::loadStats l_stat = loads[o]->getLoadStats();
+		neroFile << "ROUTE";
+		neroFile << " " << loads[o]->getName();
+		neroFile << " " << setfill('0') << right << setw(2) << l_stat.intendedStart.hour << ":" << setw(2) << l_stat.intendedStart.min;
+		neroFile << " " << setfill('0') << right << setw(2) << l_stat.intendedEnd.hour << ":" << setw(2) << l_stat.intendedEnd.min;
+		neroFile << " " << setfill('0') << right << setw(2) << l_stat.actualStart.hour << ":" << setw(2) << l_stat.actualStart.min;
+		neroFile << " " << setfill('0') << right << setw(2) << l_stat.actualEnd.hour << ":" << setw(2) << l_stat.actualEnd.min;
+		neroFile << setfill(' ') << left;
+		neroFile << " " << l_stat.minutesLate << " " << l_stat.transitTime;
+		neroFile << endl;
+	}
+
+	for (int o = 0; o < completeLoads.size(); o++)
+	{
+		load::loadStats l_stat = completeLoads[o]->getLoadStats();
+		neroFile << "ROUTE";
+		neroFile << " " << completeLoads[o]->getName();
+		neroFile << " " << setfill('0') << right << setw(2) << l_stat.intendedStart.hour << ":" << setw(2) << l_stat.intendedStart.min;
+		neroFile << " " << setfill('0') << right << setw(2) << l_stat.intendedEnd.hour << ":" << setw(2) << l_stat.intendedEnd.min;
+		neroFile << " " << setfill('0') << right << setw(2) << l_stat.actualStart.hour << ":" << setw(2) << l_stat.actualStart.min;
+		neroFile << " " << setfill('0') << right << setw(2) << l_stat.actualEnd.hour << ":" << setw(2) << l_stat.actualEnd.min;
+		neroFile << setfill(' ') << left;
+		neroFile << " " << l_stat.minutesLate << " " << l_stat.transitTime;
+		neroFile << endl;
+	}
+
+
+	maxxFile.flush();
+	neroFile.flush();
 	cout.flush();
 	cout << endl << endl;
 	system("pause");

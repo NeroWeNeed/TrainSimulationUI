@@ -77,6 +77,17 @@ node* station::getNthClosestHub(int N)
 	}
 }
 
+int station::getFarthestHubDistance()
+{
+	int max = 0;
+	for (int i = 0; i < hubDistances.size(); i++)
+	{
+		if (max < hubDistances[i].distance) max = hubDistances[i].distance;
+	}
+
+	return max;
+}
+
 void station::getBoardingInfoRef(int* minOn, int* minOff, int* maxOn, int* maxOff)
 {
 	*minOn = boardingRandMin;

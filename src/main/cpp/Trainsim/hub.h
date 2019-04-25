@@ -15,7 +15,7 @@ public:
 
 private:
 	list<train*> trainsOwned;
-	float fuel;
+	float fuel; //Depreciated
 	vector<hubStats> hub_stats;
 
 public:
@@ -29,7 +29,7 @@ public:
 
 	void giveFuel(float requested, train* receiver);
 
-	float getFuelRemaining();
+	float getFuelRemaining(); //not used?
 
 	void recordDispatch();
 

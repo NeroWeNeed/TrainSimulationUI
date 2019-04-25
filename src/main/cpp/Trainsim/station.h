@@ -14,7 +14,7 @@ public:
 
 private:
 	loadType type;
-	list<load*> loadsHere;
+	list<load*> loadsHere; //Unused, whoops
 	vector<stationStats> station_stats;
 
 	struct hubDistance //Every station will hold records of which hubs are what distance away
@@ -41,6 +41,7 @@ public:
 	void getBoardingInfoRef(int* minOn, int* minOff, int* maxOn, int* maxOff);
 
 	node* getNthClosestHub(int N);
+	int getFarthestHubDistance();
 
 	void recordPickup();
 	void recordDropoff();

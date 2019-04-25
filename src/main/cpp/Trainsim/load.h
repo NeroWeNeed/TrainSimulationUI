@@ -64,6 +64,8 @@ public:
 	milTime getPickupTime();
 	milTime getDropoffTime();
 
+	loadStats getLoadStats();
+
 
 };
 

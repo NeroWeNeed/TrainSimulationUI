@@ -19,16 +19,12 @@ public:
 		bool operator<(const record& b);
 	};
 
-private: //maybe
-	int uniqueID;
-	string name;
-	bool repeating;
+private:
+	//int uniqueID;
+	//string name;
+	//bool repeating;
 
-	
-
-
-
-	vector<record> path;
+	//vector<record> path;
 
 public:
 

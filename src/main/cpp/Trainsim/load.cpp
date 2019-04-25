@@ -52,6 +52,9 @@ load::load(string _name, int ID, int amt, node* spawn, node* destination, milTim
 	currentStop = destination;
 	begin = start;
 	dayWhen = _day;
+
+	stats.intendedStart = begin;
+
 }
 
 
@@ -154,4 +157,9 @@ void load::transit(int minutes) { stats.transitTime += minutes; }
 void load::setLateness(int wait)
 {
 	stats.minutesLate = wait;
+}
+
+load::loadStats load::getLoadStats()
+{
+	return stats;
 }
