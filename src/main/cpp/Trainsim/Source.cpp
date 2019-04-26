@@ -11,7 +11,8 @@
 #include <sstream>
 #include <fstream>
 
-#define LOAD_PROCESS_TIME 60
+#define FREIGHT_PROCESS_TIME 60
+#define PASSENGER_PROCESS_TIME 15
 #define CREW_PROCESS_TIME 60
 #define REFUEL_TIME 60
 
@@ -223,7 +224,7 @@ string rule = "=================================================================
 		string type;
 	};
 
-	struct freightDetails
+	struct repeatingFreightDetails
 	{
 		string station1;
 		string station2;
@@ -238,9 +239,24 @@ string rule = "=================================================================
 		string time;
 	};
 
-	struct passengerDetails
+	struct repeatingPassengerDetails
 	{
 		string when;
+		vector<routeDetails> stations;
+	};
+
+	struct dailyFreightDetails
+	{
+		string day;
+		string station1;
+		string station2;
+		string startTime;
+		string capacity;
+	};
+
+	struct dailyPassengerDetails
+	{
+		string day;
 		vector<routeDetails> stations;
 	};
 
@@ -482,7 +498,7 @@ string rule = "=================================================================
 		}
 
 		int worstTravelTimeMinutes = worst / param.trainSpeed;
-		worstTravelTimeMinutes += LOAD_PROCESS_TIME + 15; //Pad time
+		worstTravelTimeMinutes += FREIGHT_PROCESS_TIME + 15; //Pad time
 		return worstTravelTimeMinutes;
 	}
 
@@ -565,16 +581,19 @@ string rule = "=================================================================
 	}
 
 	//Creates the loads (repeatable routes) to be assigned in the simulation
-	void buildLoads(vector<freightDetails> inFreight, vector<passengerDetails> inPass, day simStartDay, simulationParameters param)
+	void buildLoads(vector<repeatingFreightDetails> repFreight, vector<repeatingPassengerDetails> repPass, vector<dailyFreightDetails> dayFrieght, vector<dailyPassengerDetails> dayPass, day simStartDay, simulationParameters param)
 	{
-		//Freight loop
-		for (int i = 0; i < inFreight.size(); i++)
+		cout << dayFrieght.size() << " " << dayPass.size();
+		cout << endl;
+
+		//Repeating Freight loop
+		for (int i = 0; i < repFreight.size(); i++)
 		{
-			node* spawn = findNodeByName(inFreight[i].station1);
-			node* dest  = findNodeByName(inFreight[i].station2);
+			node* spawn = findNodeByName(repFreight[i].station1);
+			node* dest  = findNodeByName(repFreight[i].station2);
 
 			vector<bool> whichDays;
-			if (inFreight[i].when == "F" || inFreight[i].when == "f")
+			if (repFreight[i].when == "F" || repFreight[i].when == "f")
 			{
 				for (int w = 0; w < param.duration; w++)
 				{
@@ -591,20 +610,20 @@ string rule = "=================================================================
 				}
 			}
 
-			milTime start = stringToTime(inFreight[i].startTime);
+			milTime start = stringToTime(repFreight[i].startTime);
 
-			int amount = stoi(inFreight[i].capacity);
+			int amount = stoi(repFreight[i].capacity);
 
 			if (spawn == NULL)
 			{
-				cout << "buildLoads could not find station named " << inFreight[i].station1 << endl;
+				cout << "buildLoads could not find station named " << repFreight[i].station1 << endl;
 				err.highError = true;
 				return;
 			}
 
 			if (dest == NULL)
 			{
-				cout << "buildLoads could not find station named " << inFreight[i].station2 << endl;
+				cout << "buildLoads could not find station named " << repFreight[i].station2 << endl;
 				err.highError = true;
 				return;
 			}
@@ -614,7 +633,7 @@ string rule = "=================================================================
 			{
 				if (whichDays[w % 7] == true)
 				{
-					string name = "Freight#" + to_string(currentFreightID) + "_day" + to_string(whatDay);
+					string name = "Repeating_Freight_" + to_string(currentFreightID) + "_day" + to_string(whatDay);
 					loads.push_back(new load(name, currentFreightID, amount, spawn, dest, start, whatDay));
 				}
 				whatDay++;
@@ -622,12 +641,12 @@ string rule = "=================================================================
 			currentFreightID++;
 		}
 		
-		//Passenger loop
-		for (int i = 0; i < inPass.size(); i++)
+		//Repeating Passenger loop
+		for (int i = 0; i < repPass.size(); i++)
 		{
 			vector<bool> whichDays;
-			cout << inPass[i].when << endl;
-			if (inPass[i].when == "F" || inPass[i].when == "f")
+			cout << repPass[i].when << endl;
+			if (repPass[i].when == "F" || repPass[i].when == "f")
 			{
 				for (int w = 0; w < param.duration; w++)
 				{
@@ -647,14 +666,14 @@ string rule = "=================================================================
 			vector<node*> stationList;
 			vector<milTime> timesList;
 
-			for (int j = inPass[i].stations.size() - 1; j >= 0 ; j--)
+			for (int j = repPass[i].stations.size() - 1; j >= 0 ; j--)
 			{
-				node* currentStation = findNodeByName(inPass[i].stations[j].station);
-				milTime currentTime = stringToTime(inPass[i].stations[j].time);
+				node* currentStation = findNodeByName(repPass[i].stations[j].station);
+				milTime currentTime = stringToTime(repPass[i].stations[j].time);
 
 				if (currentStation == NULL)
 				{
-					cout << "buildLoads could not find station named " << inPass[i].stations[j].station << endl;
+					cout << "buildLoads could not find station named " << repPass[i].stations[j].station << endl;
 					err.highError = true;
 					return;
 				}
@@ -667,11 +686,71 @@ string rule = "=================================================================
 			{
 				if (whichDays[w % 7] == true)
 				{
-					string name = "Passenger#" + to_string(currentPassID) + "_day" + to_string(whatDay);
+					string name = "Repeating_Passenger_" + to_string(currentPassID) + "_day" + to_string(whatDay);
 					loads.push_back(new load(name, currentPassID, stationList, timesList, whatDay));
 				}
 				whatDay++;
 			}
+			currentPassID++;
+		}
+
+		//Daily Freight loop
+		for (int i = 0; i < dayFrieght.size(); i++)
+		{
+			node* spawn = findNodeByName(dayFrieght[i].station1);
+			node* dest = findNodeByName(dayFrieght[i].station2);
+			milTime start = stringToTime(dayFrieght[i].startTime);
+
+			int amount = stoi(dayFrieght[i].capacity);
+
+			if (spawn == NULL)
+			{
+				cout << "buildLoads could not find station named " << dayFrieght[i].station1 << endl;
+				err.highError = true;
+				return;
+			}
+
+			if (dest == NULL)
+			{
+				cout << "buildLoads could not find station named " << dayFrieght[i].station2 << endl;
+				err.highError = true;
+				return;
+			}
+
+			int whatDay = stoi(dayFrieght[i].day);
+			string name = "Daily_Freight_" + to_string(currentFreightID) + "_day" + to_string(whatDay);
+			loads.push_back(new load(name, currentFreightID, amount, spawn, dest, start, whatDay));
+			currentFreightID++;
+		}
+
+		//Daily Passenger loop
+		for (int i = 0; i < dayPass.size(); i++)
+		{
+
+			vector<node*> stationList;
+			vector<milTime> timesList;
+
+			for (int j = dayPass[i].stations.size() - 1; j >= 0; j--)
+			{
+				node* currentStation = findNodeByName(dayPass[i].stations[j].station);
+				milTime currentTime = stringToTime(dayPass[i].stations[j].time);
+
+				if (currentStation == NULL)
+				{
+					cout << "buildLoads could not find station named " << dayPass[i].stations[j].station << endl;
+					err.highError = true;
+					return;
+				}
+
+				stationList.push_back(currentStation);
+				timesList.push_back(currentTime);
+			}
+
+			int whatDay = stoi(dayPass[i].day);
+
+			string name = "Daily_Passenger_" + to_string(currentPassID) + "_day" + to_string(whatDay);
+			loads.push_back(new load(name, currentPassID, stationList, timesList, whatDay));
+			cout << loads[loads.size() - 1]->getName();
 			currentPassID++;
 		}
 	}
@@ -793,12 +872,15 @@ string rule = "=================================================================
 
 			if (realTime >= theTrain->getLoadSought()->getBegin())
 			{
-				theTrain->setWait(LOAD_PROCESS_TIME); //hour long processing time
+				if (theTrain->getType() == FREIGHT)	theTrain->setWait(FREIGHT_PROCESS_TIME, weather);
+				else	theTrain->setWait(PASSENGER_PROCESS_TIME, weather);
 			}
 			else //If we got here early
 			{
 				int extraWait = minutesUntil(realTime, theTrain->getLoadSought()->getBegin());
-				theTrain->setWait(LOAD_PROCESS_TIME + extraWait, weather);
+
+				if (theTrain->getType() == FREIGHT)	theTrain->setWait(FREIGHT_PROCESS_TIME + extraWait, weather);
+				else	theTrain->setWait(PASSENGER_PROCESS_TIME + extraWait, weather);
 			}
 			theTrain->setState(WAIT);
 			theTrain->setExitState(HAUL);
@@ -895,7 +977,8 @@ string rule = "=================================================================
 				theTrain->setExitState(HAUL);
 			}
 			theTrain->setState(WAIT);
-			theTrain->setWait(LOAD_PROCESS_TIME, weather); //hour long processing time
+			if (theTrain->getType() == FREIGHT)	theTrain->setWait(FREIGHT_PROCESS_TIME, weather);
+			else	theTrain->setWait(PASSENGER_PROCESS_TIME, weather);
 
 			return;
 		}
@@ -1468,14 +1551,14 @@ int main()
 	initTrain.push_back({ "LOCOMOTIVE3", "HUB2", "F" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
 	initTrain.push_back({ "LOCOMOTIVE4", "HUB2", "F" });
 
-	vector<freightDetails> initFreights;
-	initFreights.push_back({  "STATION7", "STATION12", "F", "04 00", "100" });
-	initFreights.push_back({  "STATION7",  "STATION4", "F", "04 01",  "50" });
-	initFreights.push_back({  "STATION1",  "STATION2", "F", "04 50",  "50" });
-	initFreights.push_back({  "STATION6",  "STATION1", "F", "04 55",  "50" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
-	initFreights.push_back({  "STATION4",  "STATION7", "F", "05 10", "100" });
-	initFreights.push_back({  "STATION4",  "STATION1", "F", "15 10",  "50" });
-	initFreights.push_back({  "STATION2",  "STATION4", "F", "15 10",  "50" });
+	vector<repeatingFreightDetails> initRepFreights;
+	initRepFreights.push_back({  "STATION7", "STATION12", "F", "04 00", "100" });
+	initRepFreights.push_back({  "STATION7",  "STATION4", "F", "04 01",  "50" });
+	initRepFreights.push_back({  "STATION1",  "STATION2", "F", "04 50",  "50" });
+	initRepFreights.push_back({  "STATION6",  "STATION1", "F", "04 55",  "50" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
+	initRepFreights.push_back({  "STATION4",  "STATION7", "F", "05 10", "100" });
+	initRepFreights.push_back({  "STATION4",  "STATION1", "F", "15 10",  "50" });
+	initRepFreights.push_back({  "STATION2",  "STATION4", "F", "15 10",  "50" });
 
 	vector<routeDetails> initPRoutesOne;
 	initPRoutesOne.push_back({  "STATION5", "02 00" });
@@ -1489,9 +1572,23 @@ int main()
 	initPRoutesTwo.push_back({ "STATION10", "03 40" });
 	initPRoutesTwo.push_back({ "STATION11", "04 30" });
 	
-	vector<passengerDetails> initPassengers;
-	initPassengers.push_back({ "W", initPRoutesOne }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
-	initPassengers.push_back({ "F", initPRoutesTwo });
+	vector<repeatingPassengerDetails> initRepPassengers;
+	initRepPassengers.push_back({ "W", initPRoutesOne }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
+	initRepPassengers.push_back({ "F", initPRoutesTwo });
+
+	vector<dailyFreightDetails> initDayFreight;
+	initDayFreight.push_back({ "19" ,"STATION7", "STATION12", "10 00",  "11" });
+	initDayFreight.push_back({ "19" ,"STATION7",  "STATION4", "13 01",  "11" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
+	initDayFreight.push_back({ "19" ,"STATION1",  "STATION2", "15 50",  "11" });
+
+	vector<routeDetails> initPRoutesThree;
+	initPRoutesThree.push_back({ "STATION9",  "12 00" });
+	initPRoutesThree.push_back({ "STATION11", "12 50" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
+	initPRoutesThree.push_back({ "STATION10", "13 40" });
+	initPRoutesThree.push_back({ "STATION3",  "14 30" });
+
+	vector<dailyPassengerDetails> initDayPass;
+	initDayPass.push_back({ "18", initPRoutesThree }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
 
 	vector<edgeMaintenanceDetails> initEMaint;
 	initEMaint.push_back({ "1", "STATION5", "STATION4", "3" }); // DELETE THESE AND REPLACE THEM WITH BRIDGE INPUTS
@@ -1515,7 +1612,7 @@ int main()
 	buildTrains(initTrain, parameters);
 
 	cout << rule << "Preparing repeatable routes..." << endl;
-	buildLoads(initFreights, initPassengers, parameters.startDay, parameters);
+	buildLoads(initRepFreights, initRepPassengers, initDayFreight, initDayPass, parameters.startDay, parameters);
 
 	cout << rule << "Sorting routes..." << endl;
 	sortLoads();
@@ -1545,6 +1642,7 @@ int main()
  	cout << rule << endl;
 
 	//THE SIMULATION LOOP////////////////////////////////////////////////////
+	system("pause");
 	bool COLLISION = false;
 	int previousDay = 1;
 
