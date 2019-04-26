@@ -1,15 +1,19 @@
 package org.nwn.ts.simulation.data;
 
+import org.nwn.ts.util.IntRange;
+
 public class StationData extends NodeData {
 
 
     private final TrainType type;
     private final int maxTrains;
-    private final int randomOnRange;
-    private final int randomOffRange;
+    private final IntRange randomOnRange;
+    private final IntRange randomOffRange;
     private final double ticketPrice;
+    private boolean available = true;
+    private boolean used = false;
 
-    public StationData(String name, TrainType type, int maxTrains, int randomOnRange, int randomOffRange, double ticketPrice) {
+    public StationData(String name, TrainType type, int maxTrains, IntRange randomOnRange, IntRange randomOffRange, double ticketPrice) {
         this.name = name;
         this.type = type;
         this.maxTrains = maxTrains;
@@ -19,6 +23,21 @@ public class StationData extends NodeData {
 
     }
 
+    public boolean isAvailable() {
+        return available;
+    }
+
+    public void setAvailable(boolean available) {
+        this.available = available;
+    }
+
+    public boolean isUsed() {
+        return used;
+    }
+
+    public void setUsed(boolean used) {
+        this.used = used;
+    }
 
 
     public TrainType getType() {
@@ -29,11 +48,11 @@ public class StationData extends NodeData {
         return maxTrains;
     }
 
-    public int getRandomOnRange() {
+    public IntRange getRandomOnRange() {
         return randomOnRange;
     }
 
-    public int getRandomOffRange() {
+    public IntRange getRandomOffRange() {
         return randomOffRange;
     }
 

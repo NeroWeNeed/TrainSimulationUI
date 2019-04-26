@@ -19,9 +19,11 @@
             <Menu text="Edit">
                 <MenuItem text="Edit Trains" fx:id="editTrains" onAction="#menuEditTrains"/>
                 <MenuItem text="Edit Railway" fx:id="editRails" onAction="#menuEditRails"/>
+                <MenuItem text="Edit Stations" fx:id="editStations" onAction="#menuEditStations"/>
             </Menu>
             <Menu text="View">
                 <MenuItem text="View Recommendations" onAction="#viewRecommendations"/>
+                <MenuItem text="View Total Cost" onAction="#viewTotalCost"/>
 
             </Menu>
 

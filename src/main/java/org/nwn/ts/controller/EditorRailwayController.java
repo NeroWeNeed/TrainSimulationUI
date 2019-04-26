@@ -8,6 +8,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import org.nwn.ts.Model;
 import org.nwn.ts.simulation.data.EdgeData;
+import org.nwn.ts.simulation.data.HubData;
 import org.nwn.ts.simulation.data.NodeData;
 import org.nwn.ts.util.MinutesToTimeFormatter;
 
@@ -62,6 +63,11 @@ public class EditorRailwayController implements Initializable {
             alert.show();
             return;
         }
+        if (node1 instanceof HubData && node2 instanceof HubData) {
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Unable to create a connection between two hubs.");
+            alert.show();
+            return;
+        }
 
         try {
             int distance = Integer.parseInt(this.distance.textProperty().get());
@@ -92,7 +98,7 @@ public class EditorRailwayController implements Initializable {
     @FXML
     public void contextmenuDelete(ActionEvent event) {
         List<EdgeData> d = new ArrayList<>(rails.getSelectionModel().getSelectedItems());
-
+//TODO: KEEP ONE RAIL, DELETE THE REST
         rails.getSelectionModel().clearSelection();
         rails.getItems().removeAll(d);
         d.forEach(x -> {
@@ -105,24 +111,6 @@ public class EditorRailwayController implements Initializable {
 
     }
 
-    @FXML
-    public void contextmenuToggle(ActionEvent event) {
-        List<EdgeData> d = new ArrayList<>(rails.getSelectionModel().getSelectedItems());
-        d.forEach(EdgeData::toggle);
-
-    }
-    @FXML
-    public void contextmenuEnable(ActionEvent event) {
-        List<EdgeData> d = new ArrayList<>(rails.getSelectionModel().getSelectedItems());
-        d.forEach(EdgeData::enable);
-
-    }
-    @FXML
-    public void contextmenuDisable(ActionEvent event) {
-        List<EdgeData> d = new ArrayList<>(rails.getSelectionModel().getSelectedItems());
-        d.forEach(EdgeData::disable);
-
-    }
 
 
     private void populateNodeBoxes() {

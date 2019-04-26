@@ -1,5 +1,6 @@
 package org.nwn.ts.controller;
 
+import com.sun.javafx.geom.Edge;
 import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -17,11 +18,15 @@ import javafx.util.Callback;
 import org.nwn.ts.Launcher;
 import org.nwn.ts.Model;
 import org.nwn.ts.simulation.TrainSimulation;
+import org.nwn.ts.simulation.data.EdgeData;
+import org.nwn.ts.simulation.data.HubData;
 import org.nwn.ts.stats.SimulationDay;
 import org.nwn.ts.util.Configuration;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URL;
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -43,6 +48,8 @@ public class RootController implements Initializable {
     @FXML
     private MenuItem editRails;
 
+    @FXML
+    private MenuItem editStations;
     @FXML
     private VBox metrics;
 
@@ -134,11 +141,37 @@ public class RootController implements Initializable {
     }
 
     @FXML
+    public void menuEditStations(ActionEvent event) throws IOException {
+
+        Parent root = FXMLLoader.load(EditorStationController.FXML_LOCATION);
+        Scene newScene = new Scene(root);
+        Stage newStage = new Stage();
+        newStage.initModality(Modality.WINDOW_MODAL);
+        newStage.initOwner(container.getScene().getWindow());
+        newStage.setScene(newScene);
+        newStage.setResizable(false);
+        newStage.showAndWait();
+    }
+
+    @FXML
     public void viewRecommendations(ActionEvent event) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION, "Some changes I don't know");
         alert.showAndWait();
     }
 
+
+    @FXML
+    public void viewTotalCost(ActionEvent event) {
+
+        double totalPrice = (Model.getInstance().getSimulation().getHubs().size()*30.0+Model.getInstance().getSimulation().getTrains().size()*1.5);
+        for (EdgeData d : Model.getInstance().getSimulation().getRails()) {
+
+            totalPrice += d.getDistance()*1.5;
+        }
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Estimated Cost: " + NumberFormat.getCurrencyInstance().format(totalPrice*1000000));
+        alert.showAndWait();
+    }
 
 
     @FXML

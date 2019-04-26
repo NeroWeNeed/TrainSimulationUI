@@ -21,10 +21,10 @@
 
 
         </TextField>
-        <TextField fx:id="speed"  promptText="Speed">
+        <TextField fx:id="speed"  promptText="Speed" visible="false">
 
         </TextField>
-        <TextField fx:id="capacity"  promptText="Capacity">
+        <TextField fx:id="capacity"  promptText="Capacity" visible="false">
 
         </TextField>
         <VBox.margin>

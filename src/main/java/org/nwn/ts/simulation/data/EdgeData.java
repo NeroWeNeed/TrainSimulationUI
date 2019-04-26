@@ -13,7 +13,7 @@ public class EdgeData {
     private final int restrictionStart;
     private final int restrictionEnd;
     private int ID = counter.getAndAdd(1);
-    private boolean enabled = true;
+    private boolean available = true;
     private boolean used = false;
 
     public EdgeData(String vertexA, String vertexB, int distance, int restrictionStart, int restrictionEnd) {
@@ -51,19 +51,19 @@ public class EdgeData {
         return restrictionEnd;
     }
 
-    public boolean isEnabled() {
-        return enabled;
+    public boolean isAvailable() {
+        return available;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
+    public void setAvailable(boolean available) {
+        this.available = available;
     }
 
     public boolean isUsed() {
         return used;
     }
     public void toggle() {
-        this.enabled = !this.enabled;
+        this.available = !this.available;
     }
 
     public void setUsed(boolean used) {
@@ -71,10 +71,10 @@ public class EdgeData {
     }
 
     public void enable() {
-        this.enabled = true;
+        this.available = true;
     }
     public void disable() {
-        this.enabled = false;
+        this.available = false;
     }
 
     @Override

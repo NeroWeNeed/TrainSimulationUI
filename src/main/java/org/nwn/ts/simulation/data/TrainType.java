@@ -1,7 +1,12 @@
 package org.nwn.ts.simulation.data;
 
 public enum TrainType {
-    FREIGHT, PASSENGER;
+    FREIGHT('F'), PASSENGER('P');
+    private char associatedChar;
+
+    TrainType(char associatedChar) {
+        this.associatedChar = associatedChar;
+    }
 
     public static TrainType parse(String value) {
         if (value.equalsIgnoreCase("F"))
@@ -12,6 +17,10 @@ public enum TrainType {
             return null;
     }
 
+    public char getAssociatedChar() {
+        return associatedChar;
+    }
+
     public static TrainType parseFull(String value) {
         if (value.equalsIgnoreCase("FREIGHT"))
             return FREIGHT;
@@ -20,11 +29,11 @@ public enum TrainType {
         else
             return null;
     }
+
     public static TrainType random() {
         if (Math.random() < 0.5) {
             return FREIGHT;
-        }
-        else {
+        } else {
             return PASSENGER;
         }
 

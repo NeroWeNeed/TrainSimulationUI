@@ -20,9 +20,6 @@
             <ContextMenu fx:id="contextMenu">
                 <items>
                     <MenuItem text="Delete Selected" onAction="#contextmenuDelete"/>
-                    <MenuItem text="Toggle Selected" onAction="#contextmenuToggle"/>
-                    <MenuItem text="Enable Selected" onAction="#contextmenuEnable"/>
-                    <MenuItem text="Disable Selected" onAction="#contextmenuDisable"/>
                 </items>
 
             </ContextMenu>
@@ -31,7 +28,7 @@
     <HBox spacing="10" VBox.vgrow="ALWAYS">
         <ComboBox fx:id="station1" HBox.hgrow="ALWAYS"/>
         <ComboBox fx:id="station2" HBox.hgrow="ALWAYS"/>
-        <TextField fx:id="totalWeight" promptText="Distance"/>
+        <TextField fx:id="distance" promptText="Distance"/>
         <ComboBox fx:id="restrictionStartTime"/>
         <ComboBox fx:id="restrictionEndTime"/>
         <Button fx:id="addButton" text="Add" onAction="#addButtonHandler"/>

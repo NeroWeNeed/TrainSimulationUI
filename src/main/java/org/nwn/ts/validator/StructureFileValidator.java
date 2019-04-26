@@ -5,6 +5,7 @@ import org.nwn.ts.simulation.TrainSimulation;
 import org.nwn.ts.simulation.TrainSimulationUpdater;
 import org.nwn.ts.simulation.data.*;
 import org.nwn.ts.simulation.data.TrainType;
+import org.nwn.ts.util.IntRange;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -98,8 +99,8 @@ public class StructureFileValidator implements Validator {
                                             new StationData(itemMatcher.group(1),
                                                     type,
                                                     Integer.valueOf(itemMatcher.group(3)),
-                                                    Integer.valueOf(itemMatcher.group(4)),
-                                                    Integer.valueOf(itemMatcher.group(5)),
+                                                    new IntRange(Integer.valueOf(itemMatcher.group(4)),Integer.valueOf(itemMatcher.group(5))),
+                                                    new IntRange(Integer.valueOf(itemMatcher.group(6)),Integer.valueOf(itemMatcher.group(7))),
                                                     Double.valueOf(itemMatcher.group(6))
                                             ));
 

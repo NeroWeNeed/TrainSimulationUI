@@ -6,6 +6,8 @@ public class TrainData {
     private final String name;
     private final String hubName;
     private final TrainType type;
+    private boolean available = true;
+    private boolean used = false;
 
     public TrainData(String name, String hubName, TrainType type) {
         this.name = name;
@@ -36,6 +38,22 @@ public class TrainData {
         if (!(o instanceof TrainData)) return false;
         TrainData trainData = (TrainData) o;
         return name.equals(trainData.name);
+    }
+
+    public boolean isAvailable() {
+        return available;
+    }
+
+    public void setAvailable(boolean available) {
+        this.available = available;
+    }
+
+    public boolean isUsed() {
+        return used;
+    }
+
+    public void setUsed(boolean used) {
+        this.used = used;
     }
 
     @Override

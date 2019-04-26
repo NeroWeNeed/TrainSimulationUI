@@ -3,6 +3,7 @@ package org.nwn.ts;
 import org.nwn.ts.simulation.TrainSimulation;
 import org.nwn.ts.simulation.data.*;
 import org.nwn.ts.stats.*;
+import org.nwn.ts.util.IntRange;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,7 @@ public class DataProvider {
 
         for (int i = 0; i < count; i++) {
             Model.getInstance().getSimulation().getStations().add(new StationData("Station_" + i, TrainType.random(),
-                    random.nextInt(trainHigh - trainLow) + trainLow, 50, 50, 60
+                    random.nextInt(trainHigh - trainLow) + trainLow, new IntRange(50,90), new IntRange(50,90), 60
             ));
 
         }

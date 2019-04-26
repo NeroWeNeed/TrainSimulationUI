@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class TrainSimulation {
     private static TrainSimulation INSTANCE;
@@ -28,8 +29,10 @@ public class TrainSimulation {
     }
 
     private int sequence = 0;
+    private TrainBridgeWrapper bridge = new TrainBridgeWrapper();
     //Structure
     private List<TrainData> trains = new ArrayList<>();
+
     private List<StationData> stations = new ArrayList<>();
     private List<EdgeData> rails = new ArrayList<>();
     private List<HubData> hubs = new ArrayList<>();
@@ -57,10 +60,46 @@ public class TrainSimulation {
     }
 
     public List<SimulationDay> simulate(File outputDir) {
+        if (!bridge.isInitiated()) {
+            bridge.create();
+        }
 
+        hubs.stream().filter(x -> !x.isUsed()).forEach(x -> bridge.addHub(x));
+        stations.stream().filter(x -> !x.isUsed()).forEach(x -> bridge.addStation(x));
+        rails.stream().filter(x -> !x.isUsed()).forEach(x -> bridge.addRail(x));
+        trains.stream().filter(x -> !x.isUsed()).forEach(x -> bridge.addTrain(x));
+        edgeMaintenance.forEach((k, v) -> v.forEach(m -> bridge.addEdgeMaintenanceInfo(k, m)));
+        trainMaintenance.forEach((k, v) -> v.forEach(m -> bridge.addTrainMaintenanceInfo(k, m)));
+        freightRoutes.forEach((k, v) -> {
+            if (k == null) {
+                v.forEach(route -> {
+                    bridge.addRepeatableRoute(route);
+                });
+            } else {
+                v.forEach(route -> {
+                    bridge.addDailyRoute(k, route);
+                });
+            }
+
+        });
+        passengerRoutes.forEach((k, v) -> {
+            if (k == null) {
+                v.forEach(route -> {
+                    bridge.addRepeatableRoute(route);
+                });
+            } else {
+                v.forEach(route -> {
+                    bridge.addDailyRoute(k, route);
+                });
+            }
+
+        });
+        bridge.start(outputDir);
 
         return new ArrayList<>();
     }
+
+
 
     private native String _simulate();
 
@@ -101,16 +140,32 @@ public class TrainSimulation {
         return trains;
     }
 
+    public List<TrainData> getActiveTrains() {
+        return trains.stream().filter(TrainData::isAvailable).collect(Collectors.toList());
+    }
+
     public List<StationData> getStations() {
         return stations;
+    }
+
+    public List<StationData> getActiveStations() {
+        return stations.stream().filter(StationData::isAvailable).collect(Collectors.toList());
     }
 
     public List<EdgeData> getRails() {
         return rails;
     }
 
+    public List<EdgeData> getActiveRails() {
+        return rails.stream().filter(EdgeData::isAvailable).collect(Collectors.toList());
+    }
+
     public List<HubData> getHubs() {
         return hubs;
+    }
+
+    public List<HubData> getActiveHubs() {
+        return hubs.stream().filter(HubData::isAvailable).collect(Collectors.toList());
     }
 
     public Map<Integer, List<EdgeMaintenanceData>> getEdgeMaintenance() {
