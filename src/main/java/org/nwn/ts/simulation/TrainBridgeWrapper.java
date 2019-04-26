@@ -1,13 +1,38 @@
 package org.nwn.ts.simulation;
 
 import org.nwn.ts.simulation.data.*;
+import org.nwn.ts.util.BridgeLibraryLoader;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 
 public class TrainBridgeWrapper {
     private TrainBridge bridge;
     private long pointer = -1;
+    private static final String LIBRARY_LOCATION = "/lib/TrainSimulator";
+    private static boolean loaded = false;
+
+    public static void load() {
+        if (!loaded) {
+            File dir = new File(System.getProperty("user.dir"), "lib");
+            dir.mkdirs();
+
+            File libraryFile = new File(System.getProperty("user.dir") + LIBRARY_LOCATION);
+            System.out.println(libraryFile);
+            try {
+                System.out.println(LIBRARY_LOCATION);
+                Files.copy(BridgeLibraryLoader.class.getResourceAsStream(LIBRARY_LOCATION), libraryFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            System.setProperty("library.path", dir.toString());
+            loaded = true;
+        }
+        System.loadLibrary("TrainSimulatorx64");
+    }
 
     public TrainBridgeWrapper(TrainBridge bridge) {
         this.bridge = bridge;
@@ -95,6 +120,7 @@ public class TrainBridgeWrapper {
     }
 
     public File start(File outputDirectory) {
+        TrainBridgeWrapper.load();
         return new File(bridge.start(pointer, outputDirectory.toString()));
     }
 
