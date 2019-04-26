@@ -71,13 +71,14 @@ public class DataProvider {
         for (int i = 0; i < count; i++) {
             List<MetricHolder> metrics = new ArrayList<>();
             simulation.getTrains().forEach(x -> {
-                if (x instanceof PassengerTrainMetricHolder) {
+
+                if (x.getType() == TrainType.PASSENGER) {
                     metrics.add(new PassengerTrainMetricHolderImpl(x.getName(), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400)));
-                } else if (x instanceof FreightTrainMetricHolder) {
+                } else if (x.getType() == TrainType.FREIGHT) {
                     metrics.add(new FreightTrainMetricHolderImpl(x.getName(), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400)));
                 }
             });
-            System.out.println(simulation.getTrains().size());
+
             simulation.getRails().forEach(x -> {
                 metrics.add(new TrackMetricHolderImpl(x, random.nextInt(300)));
             });

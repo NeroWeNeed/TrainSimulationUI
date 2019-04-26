@@ -23,11 +23,6 @@
                             <PropertyValueFactory property="name"/>
                         </cellValueFactory>
                     </TableColumn>
-                    <TableColumn text="Type">
-                        <cellValueFactory>
-                            <PropertyValueFactory property="trainType"/>
-                        </cellValueFactory>
-                    </TableColumn>
                     <TableColumn text="Distance Traveled">
                         <cellValueFactory>
                             <PropertyValueFactory property="totalDistanceTraveled"/>
@@ -74,11 +69,6 @@
                     <TableColumn text="Name" prefWidth="50">
                         <cellValueFactory>
                             <PropertyValueFactory property="name"/>
-                        </cellValueFactory>
-                    </TableColumn>
-                    <TableColumn text="Type">
-                        <cellValueFactory>
-                            <PropertyValueFactory property="trainType"/>
                         </cellValueFactory>
                     </TableColumn>
                     <TableColumn text="Distance Traveled">
