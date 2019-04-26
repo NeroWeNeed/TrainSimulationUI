@@ -3,8 +3,10 @@ package org.nwn.ts.simulation;
 import org.nwn.ts.simulation.data.*;
 import org.nwn.ts.stats.SimulationDay;
 import org.nwn.ts.simulation.data.TrainType;
+import org.nwn.ts.validator.ReturnFileParser;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -94,11 +96,16 @@ public class TrainSimulation {
             }
 
         });
-        bridge.start(outputDir);
-
+        //File outputFile = bridge.start(outputDir);
+        File outputFile = new File("output.txt");
+        ReturnFileParser parser = new ReturnFileParser();
+        try {
+            return parser.parse(outputFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return new ArrayList<>();
     }
-
 
 
     private native String _simulate();

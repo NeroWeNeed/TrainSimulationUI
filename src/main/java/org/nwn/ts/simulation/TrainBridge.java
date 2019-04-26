@@ -41,7 +41,7 @@ public class TrainBridge {
 
     //Routes
 
-    public native void repeatable_route(long pointer);
+    public native void repeatable_route(long pointer,char type);
 
     public native void add_repeatable_freight_route_stop(long pointer, String stop1, String stop2,char type, int required_start_time, int capacity);
 

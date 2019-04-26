@@ -18,7 +18,10 @@ public class SimulationDayController implements Initializable {
     @FXML
     Parent container;
     @FXML
-    private TableView<TrainMetricHolder> trainMetrics;
+    private TableView<PassengerTrainMetricHolder> passengerTrainMetrics;
+
+    @FXML
+    private TableView<FreightTrainMetricHolder> freightTrainMetrics;
 
     @FXML
     private TableView<StationMetricHolder> stationMetrics;
@@ -34,8 +37,9 @@ public class SimulationDayController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
-        trainMetrics.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        passengerTrainMetrics.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
+        freightTrainMetrics.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         stationMetrics.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         trackMetrics.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         hubMetrics.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -51,15 +55,17 @@ public class SimulationDayController implements Initializable {
     }
 
     private void initFields(SimulationDay newValue) {
-        trainMetrics.getItems().clear();
+        passengerTrainMetrics.getItems().clear();
         trackMetrics.getItems().clear();
         stationMetrics.getItems().clear();
         hubMetrics.getItems().clear();
 
         if (newValue != null) {
             newValue.getMetrics().forEach(metric -> {
-                if (metric instanceof TrainMetricHolder) {
-                    trainMetrics.getItems().add((TrainMetricHolder) metric);
+                if (metric instanceof PassengerTrainMetricHolder) {
+                    passengerTrainMetrics.getItems().add((PassengerTrainMetricHolder) metric);
+                } else if (metric instanceof FreightTrainMetricHolder) {
+                    freightTrainMetrics.getItems().add((FreightTrainMetricHolder) metric);
                 } else if (metric instanceof TrackMetricHolder) {
                     trackMetrics.getItems().add((TrackMetricHolder) metric);
                 } else if (metric instanceof StationMetricHolder) {

@@ -5,25 +5,31 @@ import org.nwn.ts.simulation.data.StationData;
 public class StationMetricHolderImpl implements StationMetricHolder {
     private String name;
     private int trainsStopped;
+    private int visits;
     private int itemsDroppedOff;
     private int itemsPickedUp;
-    private int visits;
 
-    public StationMetricHolderImpl(String name, int itemsDroppedOff, int itemsPickedUp, int visits, int trainsStopped) {
+    public StationMetricHolderImpl(String name, int trainsStopped, int visits, int itemsDroppedOff, int itemsPickedUp) {
+        this.name = name;
         this.trainsStopped = trainsStopped;
+        this.visits = visits;
         this.itemsDroppedOff = itemsDroppedOff;
         this.itemsPickedUp = itemsPickedUp;
-        this.visits = visits;
-        this.name = name;
     }
 
-    public StationMetricHolderImpl(StationData data, int itemsPickedUp, int itemsDroppedOff, int trainsStopped, int visits) {
-        this(data.getName(), itemsDroppedOff, itemsPickedUp, visits, trainsStopped);
+    @Override
+    public String getName() {
+        return name;
     }
 
     @Override
     public int getTrainsStopped() {
         return trainsStopped;
+    }
+
+    @Override
+    public int getVisits() {
+        return visits;
     }
 
     @Override
@@ -34,15 +40,5 @@ public class StationMetricHolderImpl implements StationMetricHolder {
     @Override
     public int getItemsPickedUp() {
         return itemsPickedUp;
-    }
-
-    @Override
-    public int getVisits() {
-        return visits;
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 }

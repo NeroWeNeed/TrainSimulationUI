@@ -22,7 +22,7 @@
                 <MenuItem text="Edit Stations" fx:id="editStations" onAction="#menuEditStations"/>
             </Menu>
             <Menu text="View">
-                <MenuItem text="View Recommendations" onAction="#viewRecommendations"/>
+                <MenuItem text="View Recommendations" fx:id="viewRecommendations" onAction="#viewRecommendations"/>
                 <MenuItem text="View Total Cost" onAction="#viewTotalCost"/>
 
             </Menu>

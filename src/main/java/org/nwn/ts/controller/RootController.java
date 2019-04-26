@@ -50,6 +50,10 @@ public class RootController implements Initializable {
 
     @FXML
     private MenuItem editStations;
+
+    @FXML
+    private MenuItem viewRecommendations;
+
     @FXML
     private VBox metrics;
 
@@ -68,6 +72,8 @@ public class RootController implements Initializable {
         fileReset.disableProperty().bind(Model.getInstance().metricsExistsProperty().not());
         editTrains.disableProperty().bind(Model.getInstance().metricsExistsProperty().not());
         editRails.disableProperty().bind(Model.getInstance().metricsExistsProperty().not());
+        editStations.disableProperty().bind(Model.getInstance().metricsExistsProperty().not());
+        viewRecommendations.disableProperty().bind(Model.getInstance().metricsExistsProperty().not());
         simulationDaysListView.itemsProperty().bind(Model.getInstance().metricsProperty());
         simulationDaysListView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
         simulationDaysListView.setOnMouseClicked(x -> {

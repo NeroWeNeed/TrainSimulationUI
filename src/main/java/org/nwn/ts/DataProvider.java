@@ -24,7 +24,7 @@ public class DataProvider {
 
         for (int i = 0; i < count; i++) {
             Model.getInstance().getSimulation().getStations().add(new StationData("Station_" + i, TrainType.random(),
-                    random.nextInt(trainHigh - trainLow) + trainLow, new IntRange(50,90), new IntRange(50,90), 60
+                    random.nextInt(trainHigh - trainLow) + trainLow, new IntRange(50, 90), new IntRange(50, 90), 60
             ));
 
         }
@@ -71,16 +71,21 @@ public class DataProvider {
         for (int i = 0; i < count; i++) {
             List<MetricHolder> metrics = new ArrayList<>();
             simulation.getTrains().forEach(x -> {
-                metrics.add(new TrainMetricHolderImpl(x, random.nextInt(100), (double) random.nextInt(200), random.nextInt(400)));
+                if (x instanceof PassengerTrainMetricHolder) {
+                    metrics.add(new PassengerTrainMetricHolderImpl(x.getName(), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400)));
+                } else if (x instanceof FreightTrainMetricHolder) {
+                    metrics.add(new FreightTrainMetricHolderImpl(x.getName(), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400), random.nextInt(400)));
+                }
             });
+            System.out.println(simulation.getTrains().size());
             simulation.getRails().forEach(x -> {
                 metrics.add(new TrackMetricHolderImpl(x, random.nextInt(300)));
             });
             simulation.getStations().forEach(x -> {
-                metrics.add(new StationMetricHolderImpl(x, random.nextInt(150), random.nextInt(200), random.nextInt(300), random.nextInt(500)));
+                metrics.add(new StationMetricHolderImpl(x.getName(), random.nextInt(150), random.nextInt(200), random.nextInt(300), random.nextInt(500)));
             });
             simulation.getHubs().forEach(x -> {
-                metrics.add(new HubMetricHolderImpl(x, random.nextInt(300)));
+                metrics.add(new HubMetricHolderImpl(x.getName(), random.nextInt(300), random.nextInt(300)));
             });
             result.add(new SimulationDay(i + 1, metrics));
         }

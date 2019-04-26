@@ -4,24 +4,27 @@ import org.nwn.ts.simulation.data.HubData;
 
 public class HubMetricHolderImpl implements HubMetricHolder {
     private String name;
-    private int visits;
+    private int fuelGiven;
+    private int crewGiven;
 
-    public HubMetricHolderImpl(String name, int visits) {
-        this.visits = visits;
+    public HubMetricHolderImpl(String name, int fuelGiven, int crewGiven) {
         this.name = name;
-    }
-
-    public HubMetricHolderImpl(HubData hub,int visits) {
-        this(hub.getName(),visits);
-    }
-
-    @Override
-    public int getVisits() {
-        return visits;
+        this.fuelGiven = fuelGiven;
+        this.crewGiven = crewGiven;
     }
 
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public int getFuelGiven() {
+        return fuelGiven;
+    }
+
+    @Override
+    public int getCrewGiven() {
+        return crewGiven;
     }
 }

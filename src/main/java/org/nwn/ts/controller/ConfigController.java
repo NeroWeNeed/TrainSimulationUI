@@ -139,11 +139,6 @@ public class ConfigController implements Initializable {
                 ,
 
                 submitButtonDependencies()).not());
-/*        startSimulationButton.disableProperty().bind(Bindings.createBooleanBinding(() -> structureFilePicker.getValue() != null &&
-                        dailyRoutesFilePicker.getValue() != null
-                ,
-
-                structureFilePicker.getValueProperty(), configurationFilePicker.getValueProperty()).not().or(overrides.validProperty().not()));*/
 
 
     }
@@ -163,6 +158,7 @@ public class ConfigController implements Initializable {
     @FXML
     public void handleStartSimulationButton(ActionEvent event) {
         TrainSimulationConfiguration configuration = new TrainSimulationConfiguration();
+
         configuration.setStructureFile(structureFilePicker.getValue());
         configuration.setConfigurationFile(configurationFilePicker.getValue());
         configuration.setDailyRoutesFile(dailyRoutesFilePicker.getValue());
@@ -171,6 +167,7 @@ public class ConfigController implements Initializable {
         configuration.setOutputDirectory(outputFilePicker.getValue());
         TrainSimulationUpdater updater;
         TrainSimulation instance = TrainSimulation.getInstance();
+
         try {
             updater = configuration.createUpdater();
             if (!updater.getIssues().isEmpty()) {
@@ -191,6 +188,14 @@ public class ConfigController implements Initializable {
 
             } else {
                 updater.apply(instance);
+                if (instance.getHubs().isEmpty() || instance.getTrains().isEmpty() || instance.getRails().isEmpty() || instance.getStations().isEmpty()) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR,"Must include at least 1 Hub, Station, Train, and rail");
+
+                    alert.showAndWait();
+
+                    return;
+
+                }
                 instance.simulate(configuration.getOutputDirectory());
             }
         } catch (FileValidationException | IOException e) {

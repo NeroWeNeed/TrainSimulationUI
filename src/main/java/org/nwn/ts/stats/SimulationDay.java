@@ -13,6 +13,11 @@ public class SimulationDay {
         this.metrics.addAll(metrics);
     }
 
+    public SimulationDay(Integer day) {
+        this.day = day;
+        this.metrics = new ArrayList<>();
+    }
+
     public List<MetricHolder> getMetrics() {
         return metrics;
     }
